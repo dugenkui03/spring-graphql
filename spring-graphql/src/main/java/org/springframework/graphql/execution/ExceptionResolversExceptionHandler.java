@@ -45,9 +45,12 @@ class ExceptionResolversExceptionHandler implements DataFetcherExceptionHandler 
 
 	private static final Log logger = LogFactory.getLog(ExtractingResponseErrorHandler.class);
 
+	// kp 多实例组合，很常用
 	private final List<DataFetcherExceptionResolver> resolvers;
 
 	/**
+	 * kp 真正使用的异常处理器。
+	 *
 	 * Create an instance.
 	 * @param resolvers the resolvers to use
 	 */
@@ -60,6 +63,7 @@ class ExceptionResolversExceptionHandler implements DataFetcherExceptionHandler 
 	public DataFetcherExceptionHandlerResult onException(DataFetcherExceptionHandlerParameters parameters) {
 		Throwable exception = parameters.getException();
 		exception = ((exception instanceof CompletionException) ? exception.getCause() : exception);
+		// 使用 resolvers 处理错误
 		return invokeChain(exception, parameters.getDataFetchingEnvironment());
 	}
 
@@ -74,7 +78,10 @@ class ExceptionResolversExceptionHandler implements DataFetcherExceptionHandler 
 					.next()
 					.map((errors) -> DataFetcherExceptionHandlerResult.newResult().errors(errors).build())
 					.switchIfEmpty(Mono.fromCallable(() -> applyDefaultHandling(ex, env)))
-					.contextWrite((context) -> {
+					.contextWrite((context) -> { // todo 现在 context是什么数据
+						/**
+						 * 获取执行上下文，详情见 {@link ExecutionGraphQlService}
+						 */
 						ContextView contextView = ContextManager.getReactorContext(env);
 						return (contextView.isEmpty() ? context : context.putAll(contextView));
 					})
@@ -85,12 +92,14 @@ class ExceptionResolversExceptionHandler implements DataFetcherExceptionHandler 
 			if (logger.isWarnEnabled()) {
 				logger.warn("Failed to handle " + ex.getMessage(), ex2);
 			}
+			// 抛出异常后怼错误进行简单处理返回
 			return applyDefaultHandling(ex, env);
 		}
 	}
 
 	private DataFetcherExceptionHandlerResult applyDefaultHandling(Throwable ex, DataFetchingEnvironment env) {
 		GraphQLError error = GraphqlErrorBuilder.newError(env)
+				// 异常信息
 				.message(ex.getMessage())
 				.errorType(ErrorType.INTERNAL_ERROR)
 				.build();

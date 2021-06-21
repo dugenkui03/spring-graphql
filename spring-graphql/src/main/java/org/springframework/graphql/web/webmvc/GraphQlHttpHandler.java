@@ -47,10 +47,11 @@ public class GraphQlHttpHandler {
 	private static final Log logger = LogFactory.getLog(GraphQlHttpHandler.class);
 
 	// @formatter:off
-	private static final ParameterizedTypeReference<Map<String, Object>> MAP_PARAMETERIZED_TYPE_REF =
+	private static final
+	ParameterizedTypeReference<Map<String, Object>> MAP_PARAMETERIZED_TYPE_REF =
 			new ParameterizedTypeReference<Map<String, Object>>() {};
-	// @formatter:on
 
+	// @formatter:on
 	private final WebGraphQlHandler graphQlHandler;
 
 	/**

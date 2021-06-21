@@ -36,23 +36,30 @@ import org.springframework.beans.factory.ObjectProvider;
 public interface ThreadLocalAccessor {
 
 	/**
-	 * Extract ThreadLocal values and add them to the given Map which is then passed to
-	 * {@link #restoreValues(Map)} and {@link #resetValues(Map)} before and after the
+	 * kp 抽取
+	 * Extract ThreadLocal values and add them to the given Map
+	 * which is then passed to {@link #restoreValues(Map)}
+	 * and {@link #resetValues(Map)} before and after the
 	 * execution of a {@link graphql.schema.DataFetcher}.
+	 *
 	 * @param container container for ThreadLocal values
 	 */
 	void extractValues(Map<String, Object> container);
 
 	/**
-	 * Re-establish ThreadLocal context by looking up values, previously extracted via
-	 * {@link #extractValues(Map)}.
+	 * kp 重新存储
+	 * Re-establish ThreadLocal context by looking up values,
+	 * previously extracted via {@link #extractValues(Map)}.
+	 *
 	 * @param values the saved ThreadLocal values
 	 */
 	void restoreValues(Map<String, Object> values);
 
 	/**
-	 * Reset ThreadLocal context for the given values, previously extracted via
-	 * {@link #extractValues(Map)}.
+	 * kp 重置
+	 * Reset ThreadLocal context for the given values,
+	 * previously extracted via {@link #extractValues(Map)}.
+	 *
 	 * @param values the saved ThreadLocal values
 	 */
 	void resetValues(Map<String, Object> values);
@@ -60,6 +67,7 @@ public interface ThreadLocalAccessor {
 	/**
 	 * Create a composite accessor that delegates to all of the given accessors.
 	 * @param accessors the accessors to aggregate
+	 *
 	 * @return the composite accessor
 	 */
 	static ThreadLocalAccessor composite(List<ThreadLocalAccessor> accessors) {

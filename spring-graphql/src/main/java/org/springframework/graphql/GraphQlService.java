@@ -31,6 +31,7 @@ public interface GraphQlService {
 
 	/**
 	 * Perform the operation and return the result.
+	 *
 	 * @param input the input for the {@link graphql.GraphQL} invocation
 	 * @return the execution result
 	 */

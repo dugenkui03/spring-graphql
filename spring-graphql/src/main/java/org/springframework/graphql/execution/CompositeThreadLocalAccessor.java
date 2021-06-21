@@ -20,32 +20,42 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Default implementation of a composite accessor that is returned from
- * {@link ThreadLocalAccessor#composite(List)}.
+ * Default implementation of a composite accessor
+ * that is returned from {@link ThreadLocalAccessor#composite(List)}.
  *
  * @author Rossen Stoyanchev
  */
 class CompositeThreadLocalAccessor implements ThreadLocalAccessor {
 
+	// kp Accessor列表
 	private final List<ThreadLocalAccessor> accessors;
 
 	CompositeThreadLocalAccessor(List<ThreadLocalAccessor> accessors) {
 		this.accessors = accessors;
 	}
 
+	// 抽取
 	@Override
 	public void extractValues(Map<String, Object> container) {
-		this.accessors.forEach((accessor) -> accessor.extractValues(container));
+		for (ThreadLocalAccessor accessor : this.accessors) {
+			accessor.extractValues(container);
+		}
 	}
 
+	// 重新存储
 	@Override
 	public void restoreValues(Map<String, Object> values) {
-		this.accessors.forEach((accessor) -> accessor.restoreValues(values));
+		for (ThreadLocalAccessor accessor : this.accessors) {
+			accessor.restoreValues(values);
+		}
 	}
 
+	// 重置
 	@Override
 	public void resetValues(Map<String, Object> values) {
-		this.accessors.forEach((accessor) -> accessor.resetValues(values));
+		for (ThreadLocalAccessor accessor : this.accessors) {
+			accessor.resetValues(values);
+		}
 	}
 
 }

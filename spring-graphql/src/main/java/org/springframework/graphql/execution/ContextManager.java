@@ -28,8 +28,8 @@ import reactor.util.context.ContextView;
 import org.springframework.lang.Nullable;
 
 /**
- * Package private utility class for propagating a Reactor {@link ContextView} through the
- * {@link ExecutionInput} and the {@link DataFetchingEnvironment} of a request.
+ * Package private utility class for propagating(传播) a Reactor {@link ContextView}
+ * through the {@link ExecutionInput} and the {@link DataFetchingEnvironment} of a request.
  *
  * @author Rossen Stoyanchev
  * @since 1.0.0
@@ -43,6 +43,8 @@ public abstract class ContextManager {
 	private static final String THREAD_LOCAL_ACCESSOR_KEY = ContextManager.class.getName() + ".THREAD_LOCAL_ACCESSOR";
 
 	/**
+	 * kp 将 ContextView对象 放到请求上下文中，key为 CONTEXT_VIEW_KEY，后续可以通过DataFetchingEnvironment获取
+	 *
 	 * Save the given Reactor {@link ContextView} in the an {@link ExecutionInput} for
 	 * later access through the {@link DataFetchingEnvironment}.
 	 * @param contextView the reactor context view
@@ -98,7 +100,12 @@ public abstract class ContextManager {
 
 	@Nullable
 	private static ThreadLocalAccessor getThreadLocalAccessor(ContextView contextView) {
-		return (contextView.hasKey(THREAD_LOCAL_ACCESSOR_KEY) ? contextView.get(THREAD_LOCAL_ACCESSOR_KEY) : null);
+		return
+				// contextView.hasKey：上下文中是否包含指定key
+				contextView.hasKey(THREAD_LOCAL_ACCESSOR_KEY)
+				? contextView.get(THREAD_LOCAL_ACCESSOR_KEY)
+				: null;
+		// todo 和 contextView.getOrDefault等价。
 	}
 
 	private static Map<String, Object> getThreadLocalValues(ContextView contextView) {

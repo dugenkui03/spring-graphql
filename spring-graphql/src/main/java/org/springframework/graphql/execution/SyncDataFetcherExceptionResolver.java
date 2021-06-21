@@ -24,6 +24,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.context.ContextView;
 
 /**
+ * kp 异步的异常处理器。
  * {@link DataFetcherExceptionResolver} that resolves exceptions synchronously.
  *
  * @author Rossen Stoyanchev
@@ -33,12 +34,14 @@ public interface SyncDataFetcherExceptionResolver extends DataFetcherExceptionRe
 
 	@Override
 	default Mono<List<GraphQLError>> resolveException(Throwable exception, DataFetchingEnvironment environment) {
+		/**
+		 * 请求上下文，见 {@link ExecutionGraphQlService}
+		 */
 		ContextView contextView = ContextManager.getReactorContext(environment);
 		try {
 			ContextManager.restoreThreadLocalValues(contextView);
 			return Mono.just(doResolveException(exception, environment));
-		}
-		finally {
+		} finally {
 			ContextManager.resetThreadLocalValues(contextView);
 		}
 	}

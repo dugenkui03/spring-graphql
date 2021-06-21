@@ -15,8 +15,8 @@
  */
 
 /**
- * Support for GraphQL request execution, including abstractions to configure and invoke
- * {@link graphql.GraphQL}.
+ * Support for GraphQL request execution,
+ * including abstractions to configure and invoke {@link graphql.GraphQL}.
  */
 @NonNullApi
 @NonNullFields

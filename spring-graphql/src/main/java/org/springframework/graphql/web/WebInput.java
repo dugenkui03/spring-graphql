@@ -30,8 +30,9 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * Container for the input of a GraphQL query over HTTP. The input includes the
- * {@link UriComponents URL} and the headers of the request, as well as the query name,
+ * Container for the input of a GraphQL query over HTTP.
+ * The input includes the {@link UriComponents URL} and the headers of the request,
+ * as well as the query name,
  * operation name, and variables from the request body.
  *
  * @author Rossen Stoyanchev
@@ -39,8 +40,10 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 public class WebInput extends RequestInput {
 
+	// Uri信息
 	private final UriComponents uri;
 
+	// cookie等信息
 	private final HttpHeaders headers;
 
 	private final String id;
@@ -58,6 +61,7 @@ public class WebInput extends RequestInput {
 		super(validateQuery(body));
 		Assert.notNull(uri, "URI is required'");
 		Assert.notNull(headers, "HttpHeaders is required'");
+		// UriComponents
 		this.uri = UriComponentsBuilder.fromUri(uri).build(true);
 		this.headers = headers;
 		this.id = (id != null) ? id : ObjectUtils.identityToString(this);
@@ -72,8 +76,9 @@ public class WebInput extends RequestInput {
 	}
 
 	/**
-	 * Return the URI of the HTTP request including {@link UriComponents#getQueryParams()
-	 * URL query parameters}.
+	 * Return the URI of the HTTP request
+	 * including {@link UriComponents#getQueryParams() URL query parameters}.
+	 *
 	 * @return the HTTP request URI
 	 */
 	public UriComponents getUri() {
@@ -94,7 +99,9 @@ public class WebInput extends RequestInput {
 	 * id, when available, or otherwise it's an
 	 * {@link ObjectUtils#identityToString(Object) identity} hash based this
 	 * {@code WebInput} instance.
+	 *
 	 * @return the HTTP request identifier
+	 * 		   http 请求标识符
 	 */
 	public String getId() {
 		return this.id;
