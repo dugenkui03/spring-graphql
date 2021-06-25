@@ -21,7 +21,6 @@ import java.util.List;
 import graphql.GraphQLError;
 import graphql.schema.DataFetchingEnvironment;
 import reactor.core.publisher.Mono;
-import reactor.util.context.ContextView;
 
 /**
  * kp 异步的异常处理器。
@@ -33,25 +32,16 @@ import reactor.util.context.ContextView;
 public interface SyncDataFetcherExceptionResolver extends DataFetcherExceptionResolver {
 
 	@Override
-	default Mono<List<GraphQLError>> resolveException(Throwable exception, DataFetchingEnvironment environment) {
-		/**
-		 * 请求上下文，见 {@link ExecutionGraphQlService}
-		 */
-		ContextView contextView = ContextManager.getReactorContext(environment);
-		try {
-			ContextManager.restoreThreadLocalValues(contextView);
-			return Mono.just(doResolveException(exception, environment));
-		} finally {
-			ContextManager.resetThreadLocalValues(contextView);
-		}
+	default Mono<List<GraphQLError>> resolveException(Throwable exception, DataFetchingEnvironment env) {
+		return Mono.just(doResolveException(exception, env));
 	}
 
 	/**
 	 * Implement this method to resolve exceptions.
 	 * @param exception the exception to resolve
-	 * @param environment the environment for the invoked {@code DataFetcher}
+	 * @param env the environment for the invoked {@code DataFetcher}
 	 * @return the list of resolved GraphQL errors
 	 */
-	List<GraphQLError> doResolveException(Throwable exception, DataFetchingEnvironment environment);
+	List<GraphQLError> doResolveException(Throwable exception, DataFetchingEnvironment env);
 
 }

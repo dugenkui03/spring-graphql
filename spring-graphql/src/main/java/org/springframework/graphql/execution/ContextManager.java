@@ -38,6 +38,8 @@ public abstract class ContextManager {
 
 	private static final String CONTEXT_VIEW_KEY = ContextManager.class.getName() + ".CONTEXT_VIEW";
 
+	private static final String THREAD_ID = ContextManager.class.getName() + ".THREAD_ID";
+
 	private static final String THREAD_LOCAL_VALUES_KEY = ContextManager.class.getName() + ".THREAD_VALUES_ACCESSOR";
 
 	private static final String THREAD_LOCAL_ACCESSOR_KEY = ContextManager.class.getName() + ".THREAD_LOCAL_ACCESSOR";
@@ -65,51 +67,56 @@ public abstract class ContextManager {
 	}
 
 	/**
-	 * Use the given accessor to extract ThreadLocal value, and return a Reactor context
-	 * that contains both the extracted values and the accessor.
+	 * Use the given accessor to extract ThreadLocal values and save them in a
+	 * sub-map in the given {@link Context}, so those can be restored later
+	 * around the execution of data fetchers and exception resolvers. The accessor
+	 * instance is also saved in the Reactor Context so it can be used to
+	 * actually restore and reset ThreadLocal values.
 	 * @param accessor the accessor to use
-	 * @return the reactor {@link ContextView}
+	 * @param context the context to write to if there are ThreadLocal values
+	 * @return a new Reactor {@link ContextView} or the {@code Context} instance
+	 * that was passed in, if there were no ThreadLocal values to extract.
 	 */
-	public static ContextView extractThreadLocalValues(ThreadLocalAccessor accessor) {
+	public static Context extractThreadLocalValues(ThreadLocalAccessor accessor, Context context) {
 		Map<String, Object> valuesMap = new LinkedHashMap<>();
 		accessor.extractValues(valuesMap);
-		return Context.of(THREAD_LOCAL_VALUES_KEY, valuesMap, THREAD_LOCAL_ACCESSOR_KEY, accessor);
+		if (valuesMap.isEmpty()) {
+			return context;
+		}
+		return context.putAll((ContextView) Context.of(
+				THREAD_LOCAL_VALUES_KEY, valuesMap,
+				THREAD_LOCAL_ACCESSOR_KEY, accessor,
+				THREAD_ID, Thread.currentThread().getId()));
 	}
 
 	/**
-	 * Look up saved ThreadLocal values and use them to re-establish ThreadLocal context.
+	 * Look up saved ThreadLocal values and restore them if any are found.
+	 * This is a no-op if invoked on the thread that values were extracted on.
 	 * @param contextView the reactor {@link ContextView}
 	 */
 	static void restoreThreadLocalValues(ContextView contextView) {
 		ThreadLocalAccessor accessor = getThreadLocalAccessor(contextView);
 		if (accessor != null) {
-			accessor.restoreValues(getThreadLocalValues(contextView));
+			accessor.restoreValues(contextView.get(THREAD_LOCAL_VALUES_KEY));
 		}
 	}
 
 	/**
-	 * Look up saved ThreadLocal values and remove associated ThreadLocal context.
+	 * Look up saved ThreadLocal values and remove the ThreadLocal values.
+	 * This is a no-op if invoked on the thread that values were extracted on.
 	 * @param contextView the reactor {@link ContextView}
 	 */
 	static void resetThreadLocalValues(ContextView contextView) {
 		ThreadLocalAccessor accessor = getThreadLocalAccessor(contextView);
 		if (accessor != null) {
-			accessor.resetValues(getThreadLocalValues(contextView));
+			accessor.resetValues(contextView.get(THREAD_LOCAL_VALUES_KEY));
 		}
 	}
 
 	@Nullable
-	private static ThreadLocalAccessor getThreadLocalAccessor(ContextView contextView) {
-		return
-				// contextView.hasKey：上下文中是否包含指定key
-				contextView.hasKey(THREAD_LOCAL_ACCESSOR_KEY)
-				? contextView.get(THREAD_LOCAL_ACCESSOR_KEY)
-				: null;
-		// todo 和 contextView.getOrDefault等价。
-	}
-
-	private static Map<String, Object> getThreadLocalValues(ContextView contextView) {
-		return contextView.get(THREAD_LOCAL_VALUES_KEY);
+	private static ThreadLocalAccessor getThreadLocalAccessor(ContextView view) {
+		Long id = view.getOrDefault(THREAD_ID, null);
+		return (id != null && id != Thread.currentThread().getId() ? view.get(THREAD_LOCAL_ACCESSOR_KEY) : null);
 	}
 
 }
