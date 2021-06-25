@@ -58,7 +58,10 @@ public interface WebInterceptor {
 	 */
 	default WebInterceptor andThen(WebInterceptor interceptor) {
 		Assert.notNull(interceptor, "WebInterceptor must not be null");
-		return (currentInput, next) -> intercept(currentInput, (nextInput) -> interceptor.intercept(nextInput, next));
+		return (currentInput, next) -> intercept(currentInput,
+				// kp WebGraphQlHandler: Mono<WebOutput> handle(WebInput input)
+				(nextInput) -> interceptor.intercept(nextInput, next)
+		);
 	}
 
 }

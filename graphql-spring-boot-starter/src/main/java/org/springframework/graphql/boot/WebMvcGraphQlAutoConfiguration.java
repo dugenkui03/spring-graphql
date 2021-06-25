@@ -17,6 +17,7 @@
 package org.springframework.graphql.boot;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -79,12 +80,18 @@ public class WebMvcGraphQlAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
-	public WebGraphQlHandler webGraphQlHandler(ObjectProvider<WebInterceptor> interceptorsProvider,
-			GraphQlService service, ObjectProvider<ThreadLocalAccessor> accessorsProvider) {
+	public WebGraphQlHandler webGraphQlHandler(
+			ObjectProvider<WebInterceptor> interceptorsProvider,
+			GraphQlService service,
+			ObjectProvider<ThreadLocalAccessor> accessorsProvider) {
+
+		List<WebInterceptor> webInterceptors = interceptorsProvider.orderedStream().collect(Collectors.toList());
+		List<ThreadLocalAccessor> accessors = accessorsProvider.orderedStream().collect(Collectors.toList());
 
 		return WebGraphQlHandler.builder(service)
-				.interceptors(interceptorsProvider.orderedStream().collect(Collectors.toList()))
-				.threadLocalAccessors(accessorsProvider.orderedStream().collect(Collectors.toList())).build();
+				.interceptors(webInterceptors)
+				.threadLocalAccessors(accessors)
+				.build();
 	}
 
 	@Bean
@@ -94,8 +101,11 @@ public class WebMvcGraphQlAutoConfiguration {
 	}
 
 	@Bean
-	public RouterFunction<ServerResponse> graphQlRouterFunction(GraphQlHttpHandler handler, GraphQlSource graphQlSource,
-			GraphQlProperties properties, ResourceLoader resourceLoader) {
+	public RouterFunction<ServerResponse> graphQlRouterFunction(
+			GraphQlHttpHandler handler,
+			GraphQlSource graphQlSource,
+			GraphQlProperties properties,
+			ResourceLoader resourceLoader) {
 
 		String path = properties.getPath();
 		Resource resource = resourceLoader.getResource("classpath:graphiql/index.html");

@@ -51,6 +51,7 @@ public class GraphQlHttpHandler {
 	ParameterizedTypeReference<Map<String, Object>> MAP_PARAMETERIZED_TYPE_REF =
 			new ParameterizedTypeReference<Map<String, Object>>() {};
 
+	// kp 唯一实例字段
 	// @formatter:on
 	private final WebGraphQlHandler graphQlHandler;
 

@@ -34,7 +34,7 @@ public interface WebGraphQlHandler {
 
 	/**
 	 * Perform request execution for the given input and return the result.
-	 * 使用给定的输入执行查询，并返回结果。
+	 * kp 使用给定的输入执行查询，并返回结果。
 	 *
 	 * @param input the GraphQL request input container
 	 * @return the execution result

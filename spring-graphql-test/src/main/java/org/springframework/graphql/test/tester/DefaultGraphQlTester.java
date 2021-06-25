@@ -70,11 +70,15 @@ class DefaultGraphQlTester implements GraphQlTester {
 	private static final boolean jackson2Present;
 
 	static {
+		// 获取当前类的类加载器
 		ClassLoader classLoader = DefaultGraphQlTester.class.getClassLoader();
+		// kp 判断 指定的类名是否可以被指定的加载器加载，如果加载器对象为null、则使用默认的类加载器。
 		jackson2Present = ClassUtils.isPresent("com.fasterxml.jackson.databind.ObjectMapper", classLoader)
+				// kp 同上
 				&& ClassUtils.isPresent("com.fasterxml.jackson.core.JsonGenerator", classLoader);
 	}
 
+	// 对 graphql 请求的封装
 	private final RequestStrategy requestStrategy;
 
 	private final Configuration jsonPathConfig;
@@ -99,7 +103,8 @@ class DefaultGraphQlTester implements GraphQlTester {
 	}
 
 	/**
-	 * Encapsulate how a GraphQL request is performed.
+	 * kp 对 查询/订阅 请求的封装
+	 * En'capsulate(封装) how a GraphQL request is performed.
 	 */
 	interface RequestStrategy {
 
@@ -112,6 +117,7 @@ class DefaultGraphQlTester implements GraphQlTester {
 
 		/**
 		 * Perform a subscription with the given {@link RequestInput} container.
+		 *
 		 * @param input the request input
 		 * @return the subscription spec
 		 */
@@ -137,9 +143,17 @@ class DefaultGraphQlTester implements GraphQlTester {
 
 		@Override
 		public ResponseSpec execute(RequestInput requestInput) {
-			EntityExchangeResult<byte[]> result = this.client.post().contentType(MediaType.APPLICATION_JSON)
-					.bodyValue(requestInput).exchange().expectStatus().isOk().expectHeader()
-					.contentType(MediaType.APPLICATION_JSON).expectBody().returnResult();
+			EntityExchangeResult<byte[]> result =
+					this.client.post()
+							// application:json
+							.contentType(MediaType.APPLICATION_JSON)
+							// 请求体
+							.bodyValue(requestInput)
+							.exchange()
+							.expectStatus()
+							.isOk()
+							.expectHeader()
+							.contentType(MediaType.APPLICATION_JSON).expectBody().returnResult();
 
 			byte[] bytes = result.getResponseBodyContent();
 			Assert.notNull(bytes, "Expected GraphQL response content");
