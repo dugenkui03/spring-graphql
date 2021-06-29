@@ -16,78 +16,27 @@
 
 package org.springframework.graphql.test.tester;
 
+import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import com.jayway.jsonpath.Configuration;
 import graphql.GraphQLError;
 import reactor.core.publisher.Flux;
 
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.graphql.web.WebGraphQlHandler;
+import org.springframework.graphql.GraphQlService;
 import org.springframework.lang.Nullable;
-import org.springframework.test.web.reactive.server.WebTestClient;
 
 /**
- * Main entry point for testing GraphQL with requests performed either as an HTTP client
- * via {@link WebTestClient} or directly via a {@link WebGraphQlHandler}.
+ * Contract for testing GraphQL requests.
  *
- *
- * <p>
- * GraphQL requests to Spring MVC without an HTTP server: <pre class="code">
- * &#064;SpringBootTest
- * &#064;AutoConfigureMockMvc
- * public class MyTests {
- *
- *  private GraphQlTester graphQlTester;
- *
- *  &#064;BeforeEach
- *  public void setUp(&#064;Autowired MockMvc mockMvc) {
- *      WebTestClient client = MockMvcWebTestClient.bindTo(mockMvc).baseUrl("/graphql").build();
- *      this.graphQlTester = GraphQlTester.create(client);
- *  }
- * </pre>
- *
- * <p>
- * GraphQL requests to Spring WebFlux without an HTTP server: <pre class="code">
- * &#064;SpringBootTest
- * &#064;AutoConfigureWebTestClient
- * public class MyTests {
- *
- *  private GraphQlTester graphQlTester;
- *
- *  &#064;BeforeEach
- *  public void setUp(&#064;Autowired WebTestClient client) {
- *      this.graphQlTester = GraphQlTester.create(client);
- *  }
- * </pre>
- *
- * <p>
- * GraphQL requests to a running server: <pre class="code">
- * &#064;SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
- * public class MyTests {
- *
- *  private GraphQlTester graphQlTester;
- *
- *  &#064;BeforeEach
- *  public void setUp(&#064;Autowired WebTestClient client) {
- *      this.graphQlTester = GraphQlTester.create(client);
- *  }
- * </pre>
- *
- * <p>
- * GraphQL requests to any {@link WebGraphQlHandler}: <pre class="code">
- * &#064;SpringBootTest
- * public class MyTests {
- *
- *  private GraphQlTester graphQlTester;
- *
- *  &#064;BeforeEach
- *  public void setUp(&#064;Autowired WebGraphQLHandler handler) {
- *      this.graphQlTester = GraphQlTester.create(handler);
- *  }
- * </pre>
+ * <p>The workflow declared to prepare, execute, and verify requests is not tied
+ * to any specific underlying transport. Use {@link WebGraphQlTester} to test
+ * GraphQL requests over a Web transport. This class can also be used to perform
+ * calls directly on {@link graphql.GraphQL}, without a transport, via
+ * {@link GraphQlService}.
  *
  * @author Rossen Stoyanchev
  * @since 1.0.0
@@ -95,34 +44,74 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 public interface GraphQlTester {
 
 	/**
-	 * Prepare to perform a GraphQL request with the given operation which may be a query,
-	 * mutation, or a subscription.
+	 * Prepare to perform a GraphQL request with the given operation which may
+	 * be a query, mutation, or a subscription.
 	 * @param query the operation to be performed
 	 * @return spec for response assertions
 	 * @throws AssertionError if the response status is not 200 (OK)
 	 */
-	RequestSpec query(String query);
+	RequestSpec<?> query(String query);
+
 
 	/**
-	 * Create a {@code GraphQlTester} that performs GraphQL requests as an HTTP client
-	 * through the given {@link WebTestClient}. Depending on how the {@code WebTestClient}
-	 * is set up, tests may be with or without a server. See setup examples in class-level
-	 * Javadoc.
-	 * @param client the web client to perform requests with
-	 * @return the created {@code GraphQlTester} instance
+	 * Create a {@code GraphQlTester} that performs GraphQL requests through the
+	 * given {@link GraphQlService}.
+	 * @param service the service to execute requests with
+	 * @return the created {@code GraphQlTester}
 	 */
-	static GraphQlTester create(WebTestClient client) {
-		return new DefaultGraphQlTester(client);
+	static GraphQlTester create(GraphQlService service) {
+		return builder(service).build();
 	}
 
 	/**
-	 * Create a {@code GraphQlTester} that performs GraphQL requests through the given
-	 * {@link WebGraphQlHandler}.
-	 * @param handler the handler to execute requests with
-	 * @return the created {@code GraphQlTester} instance
+	 * Return a builder with options to initialize a {@code GraphQlTester}.
+	 * @param service the service to execute requests with
+	 * @return the builder to use
 	 */
-	static GraphQlTester create(WebGraphQlHandler handler) {
-		return new DefaultGraphQlTester(handler);
+	static Builder<?> builder(GraphQlService service) {
+		return new DefaultGraphQlTester.DefaultBuilder(service);
+	}
+
+
+	/**
+	 * A builder to create a {@link GraphQlTester} instance.
+	 */
+	interface Builder<T extends Builder<T>> {
+
+		/**
+		 * Add a global filter for expected errors. All errors that match the
+		 * given predicate are treated as expected and ignored on
+		 * {@link GraphQlTester.ErrorSpec#verify()} or when
+		 * {@link TraverseSpec#path(String) traversing} to a data path.
+		 * @param predicate the error filter to add
+		 * @return the same builder instance
+		 */
+		T errorFilter(Predicate<GraphQLError> predicate);
+
+		/**
+		 * Provide JSONPath configuration settings, including a
+		 * {@link com.jayway.jsonpath.spi.json.JsonProvider} as well as a
+		 * {@link com.jayway.jsonpath.spi.mapper.MappingProvider} that are used
+		 * to serialize and deserialize GraphQL JSON content.
+		 * <p>By default the configuration is to use Jackson JSON if it is
+		 * present on the classpath.
+		 * @param config the JSONPath configuration to use
+		 * @return the same builder instance
+		 */
+		T jsonPathConfig(Configuration config);
+
+		/**
+		 * Max amount of time to wait for a GraphQL response.
+		 * <p>By default this is set to 5 seconds.
+		 * @param timeout the response timeout value
+		 */
+		T responseTimeout(Duration timeout);
+
+		/**
+		 * Build the {@code GraphQlTester}.
+		 * @return the created instance
+		 */
+		GraphQlTester build();
 	}
 
 	/**
@@ -158,14 +147,14 @@ public interface GraphQlTester {
 	/**
 	 * Declare options to gather input for a GraphQL request and execute it.
 	 */
-	interface RequestSpec extends ExecuteSpec {
+	interface RequestSpec<T extends RequestSpec<T>> extends ExecuteSpec {
 
 		/**
 		 * Set the operation name.
 		 * @param name the operation name
 		 * @return this request spec
 		 */
-		RequestSpec operationName(@Nullable String name);
+		T operationName(@Nullable String name);
 
 		/**
 		 * Add a variable.
@@ -173,14 +162,7 @@ public interface GraphQlTester {
 		 * @param value the variable value
 		 * @return this request spec
 		 */
-		RequestSpec variable(String name, Object value);
-
-		/**
-		 * Modify variables by accessing the underlying map.
-		 * @param variablesConsumer a callback for the map of variables
-		 * @return this request spec
-		 */
-		RequestSpec variables(Consumer<Map<String, Object>> variablesConsumer);
+		T variable(String name, Object value);
 
 	}
 
@@ -452,7 +434,7 @@ public interface GraphQlTester {
 		 * Add a filter for expected errors. All errors that match the predicate are
 		 * treated as expected and ignored on {@link #verify()} or when
 		 * {@link TraverseSpec#path(String) traversing} to a data path.
-		 * @param errorPredicate the predicate to add
+		 * @param errorPredicate the error filter to add
 		 * @return the same spec to add more filters before {@link #verify()}
 		 */
 		ErrorSpec filter(Predicate<GraphQLError> errorPredicate);

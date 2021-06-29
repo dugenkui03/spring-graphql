@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.spring.sample.graphql;
 
-import java.util.Collections;
-import java.util.List;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import org.springframework.stereotype.Component;
+@SpringBootApplication
+public class SampleApplication {
 
-@Component
-public class EmployeeService {
-
-	public List<Employee> getAllEmployees() {
-		return Collections.singletonList(new Employee("1", "Andi"));
+	public static void main(String[] args) {
+		SpringApplication.run(SampleApplication.class, args);
 	}
-
 }

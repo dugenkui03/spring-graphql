@@ -15,6 +15,7 @@ public class ArtifactRepositoryDataWiring implements RuntimeWiringCustomizer {
 		this.repositories = repositories;
 	}
 
+	// 为 Query 下的字段绑定 dataFetcher
 	@Override
 	public void customize(RuntimeWiring.Builder builder) {
 		builder.type("Query", typeWiring -> typeWiring
