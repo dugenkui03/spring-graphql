@@ -56,6 +56,7 @@ class DefaultWebGraphQlHandlerBuilder implements WebGraphQlHandler.Builder {
 		return interceptors(Arrays.asList(interceptors));
 	}
 
+	// 非线程安全
 	@Override
 	public WebGraphQlHandler.Builder interceptors(List<WebInterceptor> interceptors) {
 		if (!CollectionUtils.isEmpty(interceptors)) {
@@ -70,6 +71,7 @@ class DefaultWebGraphQlHandlerBuilder implements WebGraphQlHandler.Builder {
 		return threadLocalAccessors(Arrays.asList(accessors));
 	}
 
+	// 非线程安全
 	@Override
 	public WebGraphQlHandler.Builder threadLocalAccessors(List<ThreadLocalAccessor> accessors) {
 		if (!CollectionUtils.isEmpty(accessors)) {

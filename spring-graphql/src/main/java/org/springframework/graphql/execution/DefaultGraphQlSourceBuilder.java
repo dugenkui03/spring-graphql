@@ -48,14 +48,19 @@ class DefaultGraphQlSourceBuilder implements GraphQlSource.Builder {
 	@Nullable
 	private Resource schemaResource;
 
+	// kp GraphQL 的执行绑定信息
 	private RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring().build();
 
+	// 将 dataFetcher 返回的异常结果包装为 List<GraphQLError>
 	private final List<DataFetcherExceptionResolver> exceptionResolvers = new ArrayList<>();
 
+	// todo
 	private final List<GraphQLTypeVisitor> typeVisitors = new ArrayList<>();
 
+	// kp
 	private final List<Instrumentation> instrumentations = new ArrayList<>();
 
+	// todo
 	private Consumer<GraphQL.Builder> graphQlConfigurers = (builder) -> {
 	};
 

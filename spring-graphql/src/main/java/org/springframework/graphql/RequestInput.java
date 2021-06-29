@@ -30,9 +30,9 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 /**
- * Common representation for GraphQL request input. This can be converted to
- * {@link ExecutionInput} via {@link #toExecutionInput()} and the {@code ExecutionInput}
- * further customized via {@link #configureExecutionInput(BiFunction)}.
+ * Common representation for GraphQL request input.
+ * This can be converted to {@link ExecutionInput} via {@link #toExecutionInput()}
+ * and the {@code ExecutionInput} further customized via {@link #configureExecutionInput(BiFunction)}.
  *
  * @author Rossen Stoyanchev
  * @since 1.0.0
@@ -46,7 +46,9 @@ public class RequestInput {
 
 	private final Map<String, Object> variables;
 
-	private final List<BiFunction<ExecutionInput, ExecutionInput.Builder, ExecutionInput>> executionInputConfigurers = new ArrayList<>();
+	// 输入配置
+	private final
+	List<BiFunction<ExecutionInput, ExecutionInput.Builder, ExecutionInput>> executionInputConfigurers = new ArrayList<>();
 
 	public RequestInput(String query, @Nullable String operationName, @Nullable Map<String, Object> vars) {
 		Assert.notNull(query, "'query' is required");
@@ -65,8 +67,10 @@ public class RequestInput {
 	}
 
 	/**
-	 * Return the query name extracted from the request body. This is guaranteed to be a
-	 * non-empty string.
+	 * kp 查询名称
+	 * Return the query name extracted from the request body.
+	 *
+	 * This is guaranteed to be a non-empty string.
 	 * @return the query name
 	 */
 	public String getQuery() {
@@ -74,8 +78,10 @@ public class RequestInput {
 	}
 
 	/**
-	 * Return the operation name extracted from the request body or {@code null} if not
-	 * provided.
+	 * kp 操作名称
+	 * Return the operation name extracted from the request body
+	 * or {@code null} if not provided.
+	 *
 	 * @return the operation name or {@code null}
 	 */
 	@Nullable
@@ -84,8 +90,10 @@ public class RequestInput {
 	}
 
 	/**
-	 * Return the variables that can be referenced via $syntax extracted from the request
-	 * body or a {@code null} if not provided.
+	 * kp 请求变量。
+	 * Return the variables that can be referenced via $syntax
+	 * extracted from the request body or a {@code null} if not provided.
+	 *
 	 * @return the request variables or {@code null}
 	 */
 	public Map<String, Object> getVariables() {
@@ -93,6 +101,7 @@ public class RequestInput {
 	}
 
 	/**
+	 * kp 添加输入处理。
 	 * Provide a consumer to configure the {@link ExecutionInput} used for input to
 	 * {@link graphql.GraphQL#executeAsync(ExecutionInput)}. The builder is initially
 	 * populated with the values from {@link #getQuery()}, {@link #getOperationName()},
@@ -115,8 +124,11 @@ public class RequestInput {
 		ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(this.query)
 				.operationName(this.operationName).variables(this.variables).build();
 
+		// kp 使用 executionInputConfigurers 对输入进行处理后返回
 		for (BiFunction<ExecutionInput, ExecutionInput.Builder, ExecutionInput> configurer : this.executionInputConfigurers) {
 			ExecutionInput current = executionInput;
+			// current：当前对象
+			// builder：当前对象的builder
 			executionInput = executionInput.transform((builder) -> configurer.apply(current, builder));
 		}
 
@@ -134,6 +146,7 @@ public class RequestInput {
 			map.put("operationName", getOperationName());
 		}
 		if (!CollectionUtils.isEmpty(getVariables())) {
+			// 复制变量map
 			map.put("variables", new LinkedHashMap<>(getVariables()));
 		}
 		return map;

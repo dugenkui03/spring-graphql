@@ -35,6 +35,10 @@ import reactor.util.context.ContextView;
 import org.springframework.util.Assert;
 
 /**
+ * kp 对 dataFetcher进行包装，使其支持：
+ * 		1. 将 Mono 作为返回值；
+ * 		2.
+ *
  * Wrap a {@link DataFetcher} to enable the following:
  * <ul>
  * <li>Support {@link Mono} return value.
@@ -94,9 +98,9 @@ final class ContextDataFetcherDecorator implements DataFetcher<Object> {
 	 * they return {@link Flux} or {@link Mono}.
 	 */
 	static GraphQLTypeVisitor TYPE_VISITOR = new GraphQLTypeVisitorStub() {
-
 		@Override
-		public TraversalControl visitGraphQLFieldDefinition(GraphQLFieldDefinition fieldDefinition,
+		public TraversalControl visitGraphQLFieldDefinition(
+				GraphQLFieldDefinition fieldDefinition,
 				TraverserContext<GraphQLSchemaElement> context) {
 
 			GraphQLCodeRegistry.Builder codeRegistry = context.getVarFromParents(GraphQLCodeRegistry.Builder.class);

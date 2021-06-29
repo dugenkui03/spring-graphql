@@ -19,6 +19,7 @@ package org.springframework.graphql.execution;
 import graphql.ErrorClassification;
 
 /**
+ * kp DataFetcher错误类型：bad请求、未授权、禁止、没有发现、内部错误。
  * Common categories to use to classify for exceptions raised by
  * {@link graphql.schema.DataFetcher}'s that can enable a client to make automated
  * decisions.

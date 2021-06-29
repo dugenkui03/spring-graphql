@@ -72,13 +72,12 @@ public class GraphQlWebSocketHandler extends TextWebSocketHandler implements Sub
 
 	private static final Log logger = LogFactory.getLog(GraphQlWebSocketHandler.class);
 
+	// 订阅协议？
 	// @formatter:off
-
 	private static final List<String> SUB_PROTOCOL_LIST =
 			Arrays.asList("graphql-transport-ws", "subscriptions-transport-ws");
 
 	// @formatter:on
-
 	private final WebGraphQlHandler graphQlHandler;
 
 	private final Duration initTimeoutDuration;
@@ -402,6 +401,7 @@ public class GraphQlWebSocketHandler extends TextWebSocketHandler implements Sub
 
 	private static class SessionState {
 
+		// ？连接初始化处理？
 		private boolean connectionInitProcessed;
 
 		private final Map<String, Subscription> subscriptions = new ConcurrentHashMap<>();
@@ -416,6 +416,7 @@ public class GraphQlWebSocketHandler extends TextWebSocketHandler implements Sub
 			return !this.connectionInitProcessed;
 		}
 
+		// 新值为true、返回旧值
 		synchronized boolean setConnectionInitProcessed() {
 			boolean previousValue = this.connectionInitProcessed;
 			this.connectionInitProcessed = true;
@@ -429,7 +430,8 @@ public class GraphQlWebSocketHandler extends TextWebSocketHandler implements Sub
 		void dispose() {
 			for (Map.Entry<String, Subscription> entry : this.subscriptions.entrySet()) {
 				try {
-					entry.getValue().cancel();
+					Subscription sub = entry.getValue();
+					sub.cancel();
 				}
 				catch (Throwable ex) {
 					// Ignore and keep on
@@ -447,10 +449,13 @@ public class GraphQlWebSocketHandler extends TextWebSocketHandler implements Sub
 
 	private static class SendMessageSubscriber extends BaseSubscriber<TextMessage> {
 
+		// 订阅id
 		private final String subscriptionId;
 
+		// session
 		private final WebSocketSession session;
 
+		//
 		private final SessionState sessionState;
 
 		SendMessageSubscriber(String subscriptionId, WebSocketSession session, SessionState sessionState) {

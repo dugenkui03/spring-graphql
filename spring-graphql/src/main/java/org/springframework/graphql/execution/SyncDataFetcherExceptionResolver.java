@@ -23,6 +23,7 @@ import graphql.schema.DataFetchingEnvironment;
 import reactor.core.publisher.Mono;
 
 /**
+ * kp 异步的异常处理器。
  * {@link DataFetcherExceptionResolver} that resolves exceptions synchronously.
  *
  * @author Rossen Stoyanchev

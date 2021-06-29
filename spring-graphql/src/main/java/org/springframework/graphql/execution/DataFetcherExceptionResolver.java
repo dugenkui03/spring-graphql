@@ -34,6 +34,8 @@ import reactor.core.publisher.Mono;
 public interface DataFetcherExceptionResolver {
 
 	/**
+	 * kp 异常处理器：将 dataFetcher 返回的异常结果包装为 List<GraphQLError>。
+	 *
 	 * Resolve the given exception and return the error(s) to add to the response.
 	 * <p>
 	 * Implementations can use

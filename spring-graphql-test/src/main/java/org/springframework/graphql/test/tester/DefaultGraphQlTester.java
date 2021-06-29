@@ -132,6 +132,7 @@ class DefaultGraphQlTester implements GraphQlTester {
 
 		/**
 		 * Perform a subscription with the given {@link RequestInput} container.
+		 *
 		 * @param input the request input
 		 * @return the subscription spec
 		 */

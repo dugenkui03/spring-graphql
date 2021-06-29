@@ -43,6 +43,7 @@ import org.springframework.core.io.Resource;
 public interface GraphQlSource {
 
 	/**
+	 * kp 返回要是用的 GraphQL 对象
 	 * Return the {@link GraphQL} to use. This can be a cached instance or a different one
 	 * from time to time (e.g. based on a reloaded schema).
 	 * @return the GraphQL instance to use
@@ -50,12 +51,16 @@ public interface GraphQlSource {
 	GraphQL graphQl();
 
 	/**
+	 * kp 返回 GraphQL对象 使用的 schema
+	 *
 	 * Return the {@link GraphQLSchema} used by the current {@link GraphQL}.
 	 * @return the current GraphQL schema
 	 */
 	GraphQLSchema schema();
 
 	/**
+	 * kp GraphQlSource 的 builder 对象
+	 *
 	 * Return a builder for a {@link GraphQlSource} given input for the initialization of
 	 * {@link GraphQL} and {@link graphql.schema.GraphQLSchema}.
 	 * @return a builder for a GraphQlSource
@@ -65,6 +70,8 @@ public interface GraphQlSource {
 	}
 
 	/**
+	 * kp 默认实现见 {@link DefaultGraphQlSourceBuilder}
+	 *
 	 * Builder for a {@link GraphQlSource}.
 	 */
 	interface Builder {
