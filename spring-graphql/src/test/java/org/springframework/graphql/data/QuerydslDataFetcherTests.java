@@ -73,7 +73,7 @@ class QuerydslDataFetcherTests {
 		MockRepository mockRepository = mock(MockRepository.class);
 		Book book1 = new Book(42L, "Hitchhiker's Guide to the Galaxy", "Douglas Adams");
 		Book book2 = new Book(53L, "Breaking Bad", "Heisenberg");
-		when(mockRepository.findAll((Predicate) null)).thenReturn(Arrays.asList(book1, book2));
+		when(mockRepository.findAll(any(Predicate.class))).thenReturn(Arrays.asList(book1, book2));
 
 		WebGraphQlHandler handler = initWebGraphQlHandler(builder -> builder
 				.dataFetcher("books", QuerydslDataFetcher.builder(mockRepository).many()));
@@ -169,7 +169,7 @@ class QuerydslDataFetcherTests {
 		ReactiveMockRepository mockRepository = mock(ReactiveMockRepository.class);
 		Book book1 = new Book(42L, "Hitchhiker's Guide to the Galaxy", "Douglas Adams");
 		Book book2 = new Book(53L, "Breaking Bad", "Heisenberg");
-		when(mockRepository.findAll((Predicate) null)).thenReturn(Flux.just(book1, book2));
+		when(mockRepository.findAll((Predicate) any())).thenReturn(Flux.just(book1, book2));
 
 		WebGraphQlHandler handler = initWebGraphQlHandler(builder -> builder
 				.dataFetcher("books", QuerydslDataFetcher.builder(mockRepository).many()));
@@ -202,7 +202,7 @@ class QuerydslDataFetcherTests {
 		configurer.accept(wiringBuilder);
 		builder.type(wiringBuilder);
 		return GraphQlSource.builder()
-				.schemaResource(new ClassPathResource("books/schema.graphqls"))
+				.schemaResources(new ClassPathResource("books/schema.graphqls"))
 				.runtimeWiring(builder.build())
 				.build();
 	}
