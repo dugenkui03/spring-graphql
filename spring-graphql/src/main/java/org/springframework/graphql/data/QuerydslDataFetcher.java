@@ -96,11 +96,15 @@ import org.springframework.util.MultiValueMap;
  */
 public abstract class QuerydslDataFetcher<T> {
 
+	// 类型属性
 	private static final QuerydslPredicateBuilder BUILDER = new QuerydslPredicateBuilder(
-			DefaultConversionService.getSharedInstance(), SimpleEntityPathResolver.INSTANCE);
+			DefaultConversionService.getSharedInstance(), SimpleEntityPathResolver.INSTANCE
+	);
 
+	// 实例属性
 	private final TypeInformation<T> domainType;
 
+	//
 	private final QuerydslBinderCustomizer<EntityPath<?>> customizer;
 
 	QuerydslDataFetcher(ClassTypeInformation<T> domainType, QuerydslBinderCustomizer<EntityPath<?>> customizer) {
@@ -144,12 +148,13 @@ public abstract class QuerydslDataFetcher<T> {
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	protected Predicate buildPredicate(DataFetchingEnvironment environment) {
-		MultiValueMap<String, Object> parameters = new LinkedMultiValueMap<>();
-		QuerydslBindings bindings = new QuerydslBindings();
 
+		QuerydslBindings bindings = new QuerydslBindings();
 		EntityPath<?> path = SimpleEntityPathResolver.INSTANCE.createPath(this.domainType.getType());
 		this.customizer.customize(bindings, path);
 
+		// 参数
+		MultiValueMap<String, Object> parameters = new LinkedMultiValueMap<>();
 		for (Map.Entry<String, Object> entry : environment.getArguments().entrySet()) {
 			parameters.put(entry.getKey(), Collections.singletonList(entry.getValue()));
 		}
@@ -267,6 +272,8 @@ public abstract class QuerydslDataFetcher<T> {
 
 		/**
 		 * Build a {@link DataFetcher} to fetch many object instances.
+		 * todo 支持DataFetcherResult.
+		 *
 		 * @return a {@link DataFetcher} based on Querydsl to fetch many objects
 		 */
 		public DataFetcher<Iterable<R>> many() {
@@ -379,14 +386,20 @@ public abstract class QuerydslDataFetcher<T> {
 
 	}
 
-	private static class ManyEntityFetcher<T, R> extends QuerydslDataFetcher<T> implements DataFetcher<Iterable<R>> {
+	private static class ManyEntityFetcher<T, R>
+			// todo
+			extends QuerydslDataFetcher<T>
+			// 返回列表数据
+			implements DataFetcher<Iterable<R>> {
 
 		private final QuerydslPredicateExecutor<T> executor;
 
+		// 对结果进行处理
 		private final Function<T, R> resultConverter;
 
 		@SuppressWarnings({"unchecked", "rawtypes"})
-		ManyEntityFetcher(QuerydslPredicateExecutor<T> executor,
+		ManyEntityFetcher(
+				QuerydslPredicateExecutor<T> executor,
 				ClassTypeInformation<T> domainType,
 				QuerydslBinderCustomizer<? extends EntityPath<T>> customizer,
 				Function<T, R> resultConverter) {
@@ -398,7 +411,10 @@ public abstract class QuerydslDataFetcher<T> {
 		@Override
 		public Iterable<R> get(DataFetchingEnvironment environment) {
 			Predicate predicate = buildPredicate(environment);
-			return Streamable.of(this.executor.findAll(predicate)).map(this.resultConverter).toList();
+
+			return Streamable.of(this.executor.findAll(predicate))
+					// 对结果进行转换处理
+					.map(this.resultConverter).toList();
 		}
 
 	}
