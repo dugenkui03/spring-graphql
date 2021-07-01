@@ -3,8 +3,10 @@ plugins {
 }
 
 ext {
-	moduleProjects = subprojects.findAll { it.name.startsWith("spring-") }
+	moduleProjects = [project(":spring-graphql"), project(":spring-graphql-test")]
 }
+
+description = "Spring GraphQL"
 
 subprojects {
 	apply plugin: 'io.spring.dependency-management'
