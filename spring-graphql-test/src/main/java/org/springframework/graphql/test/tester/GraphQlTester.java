@@ -44,8 +44,10 @@ import org.springframework.lang.Nullable;
 public interface GraphQlTester {
 
 	/**
-	 * Prepare to perform a GraphQL request with the given operation which may
-	 * be a query, mutation, or a subscription.
+	 * Prepare to perform a GraphQL request
+	 * with the given operation
+	 * which may be a query, mutation, or a subscription.
+	 *
 	 * @param query the operation to be performed
 	 * @return spec for response assertions
 	 * @throws AssertionError if the response status is not 200 (OK)

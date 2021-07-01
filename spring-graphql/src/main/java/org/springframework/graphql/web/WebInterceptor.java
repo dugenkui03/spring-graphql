@@ -25,12 +25,14 @@ import org.springframework.util.Assert;
 
 /**
  * Interceptor for intercepting GraphQL over HTTP or WebSocket requests. Provides
- * information about the HTTP request or WebSocket handshake, allows customization of the
+ * information about the HTTP request or WebSocket handshake(握手), allows customization of the
  * {@link ExecutionInput} and of the {@link ExecutionResult} from request execution.
+ * kp 拦截http请求，自定义处理请求参数和结果。
  *
  * <p>
  * Interceptors may be declared as beans in Spring configuration and ordered as defined in
  * {@link ObjectProvider#orderedStream()}.
+ * kp 可以定义成一个bean、顺序由 {@link ObjectProvider#orderedStream()} 决定
  *
  * <p>
  * Supported for Spring MVC and WebFlux.
@@ -43,8 +45,10 @@ public interface WebInterceptor {
 	/**
 	 * Intercept a request and delegate for further handling and request execution via
 	 * {@link WebGraphQlHandler#handle(WebInput)}.
+	 *
 	 * @param webInput container with HTTP request information and options to customize
 	 * the {@link ExecutionInput}.
+	 *
 	 * @param next the handler to delegate to for request execution
 	 * @return a {@link Mono} with the result
 	 */

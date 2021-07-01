@@ -28,6 +28,7 @@ import org.springframework.graphql.test.tester.GraphQlTester;
 
 /**
  * Annotation that can be applied to a test class to enable a {@link GraphQlTester}.
+ * kp 放在 测试类 上，启用 GraphQlTester
  *
  * @author Brian Clozel
  * @see GraphQlTesterAutoConfiguration
