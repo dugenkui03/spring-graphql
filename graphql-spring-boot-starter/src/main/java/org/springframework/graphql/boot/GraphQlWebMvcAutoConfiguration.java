@@ -80,7 +80,8 @@ public class GraphQlWebMvcAutoConfiguration {
 	@Bean
 	@ConditionalOnBean(GraphQlService.class)
 	@ConditionalOnMissingBean
-	public WebGraphQlHandler webGraphQlHandler(GraphQlService service, ObjectProvider<WebInterceptor> interceptorsProvider,
+	public WebGraphQlHandler webGraphQlHandler(GraphQlService service,
+											   ObjectProvider<WebInterceptor> interceptorsProvider,
 											   ObjectProvider<ThreadLocalAccessor> accessorsProvider) {
 		return WebGraphQlHandler.builder(service)
 				.interceptors(interceptorsProvider.orderedStream().collect(Collectors.toList()))
@@ -127,7 +128,8 @@ public class GraphQlWebMvcAutoConfiguration {
 		@Bean
 		@ConditionalOnMissingBean
 		public GraphQlWebSocketHandler graphQlWebSocketHandler(WebGraphQlHandler webGraphQlHandler,
-															   GraphQlProperties properties, HttpMessageConverters converters) {
+															   GraphQlProperties properties,
+															   HttpMessageConverters converters) {
 			// @formatter:off
 			HttpMessageConverter<?> converter = converters.getConverters().stream()
 					.filter((candidate) -> candidate.canRead(Map.class, MediaType.APPLICATION_JSON))

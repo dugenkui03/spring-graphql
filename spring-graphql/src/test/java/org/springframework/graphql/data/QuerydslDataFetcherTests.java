@@ -26,6 +26,8 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.querydsl.core.types.Predicate;
+
+import graphql.schema.DataFetcher;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.TypeRuntimeWiring;
 import org.junit.jupiter.api.Test;
@@ -43,6 +45,7 @@ import org.springframework.graphql.execution.ExecutionGraphQlService;
 import org.springframework.graphql.execution.GraphQlSource;
 import org.springframework.graphql.web.WebGraphQlHandler;
 import org.springframework.graphql.web.WebInput;
+import org.springframework.graphql.web.WebInterceptor;
 import org.springframework.graphql.web.WebOutput;
 import org.springframework.http.HttpHeaders;
 
@@ -54,18 +57,35 @@ class QuerydslDataFetcherTests {
 	@Test
 	void shouldFetchSingleItems() {
 		MockRepository mockRepository = mock(MockRepository.class);
-		Book book = new Book(42L, "Hitchhiker's Guide to the Galaxy", "Douglas Adams");
-		when(mockRepository.findOne(any())).thenReturn(Optional.of(book));
+		Book book = new Book(
+				42L,
+				"Hitchhiker's Guide to the Galaxy",
+				"Douglas Adams"
+		);
+		when(
+				mockRepository.findOne(any())
+		).thenReturn(Optional.of(book));
 
-		WebGraphQlHandler handler = initWebGraphQlHandler(builder -> builder
-				.dataFetcher("bookById", QuerydslDataFetcher.builder(mockRepository).single()));
+		WebGraphQlHandler handler = initWebGraphQlHandler(builder ->
+				// kp 给 Query 下的字段绑定 DataFetcher
+				builder.dataFetcher(
+						"bookById",
+						QuerydslDataFetcher.builder(mockRepository).single()
+				)
+		);
 
-		WebOutput output = handler.handle(input("{ bookById(id: 1) {name}}")).block();
+		WebInput webInput = input("{ bookById(id: 1) {name}}");
+
+		Mono<WebOutput> webOutputMono = handler.handle(webInput);
+		WebOutput output = webOutputMono.block();
 
 		// TODO: getData interferes with method overrides
 		assertThat((Object) output.getData()).isEqualTo(
-				Collections.singletonMap("bookById",
-						Collections.singletonMap("name", "Hitchhiker's Guide to the Galaxy")));
+				Collections.singletonMap(
+						"bookById",
+						Collections.singletonMap("name", "Hitchhiker's Guide to the Galaxy")
+				)
+		);
 	}
 
 	@Test
@@ -150,11 +170,17 @@ class QuerydslDataFetcherTests {
 	@Test
 	void shouldReactivelyFetchSingleItems() {
 		ReactiveMockRepository mockRepository = mock(ReactiveMockRepository.class);
-		Book book = new Book(42L, "Hitchhiker's Guide to the Galaxy", "Douglas Adams");
+		Book book = new Book(
+				42L,
+				"Hitchhiker's Guide to the Galaxy",
+				"Douglas Adams"
+		);
 		when(mockRepository.findOne(any())).thenReturn(Mono.just(book));
-
-		WebGraphQlHandler handler = initWebGraphQlHandler(builder -> builder
-				.dataFetcher("bookById", QuerydslDataFetcher.builder(mockRepository).single()));
+		DataFetcher<Mono<Book>> monoDataFetcher = QuerydslDataFetcher.builder(mockRepository).single();
+		WebGraphQlHandler handler = initWebGraphQlHandler(
+				builder -> builder
+						.dataFetcher("bookById", monoDataFetcher)
+		);
 
 		WebOutput output = handler.handle(input("{ bookById(id: 1) {name}}")).block();
 
@@ -171,8 +197,11 @@ class QuerydslDataFetcherTests {
 		Book book2 = new Book(53L, "Breaking Bad", "Heisenberg");
 		when(mockRepository.findAll((Predicate) any())).thenReturn(Flux.just(book1, book2));
 
-		WebGraphQlHandler handler = initWebGraphQlHandler(builder -> builder
-				.dataFetcher("books", QuerydslDataFetcher.builder(mockRepository).many()));
+		DataFetcher<Flux<Book>> manyDataFetcher = QuerydslDataFetcher.builder(mockRepository).many();
+		WebGraphQlHandler handler = initWebGraphQlHandler(
+				builder -> builder
+						.dataFetcher("books", manyDataFetcher)
+		);
 
 		WebOutput output = handler.handle(input("{ books {name}}")).block();
 
@@ -191,8 +220,17 @@ class QuerydslDataFetcherTests {
 	}
 
 	static WebGraphQlHandler initWebGraphQlHandler(Consumer<TypeRuntimeWiring.Builder> configurer) {
+		GraphQlSource graphQlSource = graphQlSource(configurer);
+		ExecutionGraphQlService graphQlService = new ExecutionGraphQlService(graphQlSource);
 		return WebGraphQlHandler
-				.builder(new ExecutionGraphQlService(graphQlSource(configurer)))
+				.builder(graphQlService)
+				// kp 拦截器的使用
+//				.interceptor(new WebInterceptor() {
+//					@Override
+//					public Mono<WebOutput> intercept(WebInput webInput, WebGraphQlHandler next) {
+//						return next.handle(webInput);
+//					}
+//				})
 				.build();
 	}
 

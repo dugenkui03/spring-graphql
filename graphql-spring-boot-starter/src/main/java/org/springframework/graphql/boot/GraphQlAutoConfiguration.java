@@ -62,10 +62,14 @@ public class GraphQlAutoConfiguration {
 
 		private static final String[] SCHEMA_FILES_EXTENSIONS = new String[] {"*.graphqls", "*.graphql", "*.gql", "*.gqls"};
 
+		/**
+		 * @param customizers 所有的 类型.字段/dataFetcher 绑定关系
+		 */
 		@Bean
 		@ConditionalOnMissingBean
 		public RuntimeWiring runtimeWiring(ObjectProvider<RuntimeWiringBuilderCustomizer> customizers) {
 			RuntimeWiring.Builder builder = RuntimeWiring.newRuntimeWiring();
+			// orderedStream(): 按照 @Order 顺序返回数据
 			customizers.orderedStream().forEach((customizer) -> customizer.customize(builder));
 			return builder.build();
 		}

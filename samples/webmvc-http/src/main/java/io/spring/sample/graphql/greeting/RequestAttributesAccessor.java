@@ -15,7 +15,6 @@
  */
 package io.spring.sample.graphql.greeting;
 
-import java.util.Collections;
 import java.util.Map;
 
 import org.springframework.graphql.execution.ThreadLocalAccessor;
@@ -32,18 +31,22 @@ public class RequestAttributesAccessor implements ThreadLocalAccessor {
 
 	private static final String ATTRIBUTES_KEY = RequestAttributesAccessor.class.getName() + ".requestAttributes";
 
+	// 在 上下文map 中set数据
 	@Override
 	public void extractValues(Map<String, Object> container) {
 		RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
 		if (attributes != null) {
+			// <"RequestAttributesAccessor.requestAttributes",RequestAttributes 对象>
 			container.put(ATTRIBUTES_KEY, attributes);
 		}
 	}
 
 	@Override
 	public void restoreValues(Map<String, Object> values) {
+		// "RequestAttributesAccessor.requestAttributes"
 		RequestAttributes attributes = (RequestAttributes) values.get(ATTRIBUTES_KEY);
 		if (attributes != null) {
+			// 将给定的对象绑定到当前的线程
 			RequestContextHolder.setRequestAttributes(attributes);
 		}
 	}

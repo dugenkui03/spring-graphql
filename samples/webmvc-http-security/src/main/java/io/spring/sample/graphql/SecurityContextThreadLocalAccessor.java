@@ -14,6 +14,7 @@ public class SecurityContextThreadLocalAccessor implements ThreadLocalAccessor {
 
 	@Override
 	public void extractValues(Map<String, Object> container) {
+		// 获取安全上下文
 		container.put(KEY, SecurityContextHolder.getContext());
 	}
 

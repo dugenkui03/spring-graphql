@@ -44,6 +44,7 @@ class DtoInstantiatingConverter<T> implements Converter<Object, T> {
 
 	/**
 	 * Create a new {@link Converter} to instantiate DTOs.
+	 *
 	 * @param dtoType target type
 	 * @param context mapping context to be used
 	 * @param entityInstantiators the instantiators to use for object creation
@@ -61,29 +62,36 @@ class DtoInstantiatingConverter<T> implements Converter<Object, T> {
 	@Override
 	public T convert(Object source) {
 
+		// 如果 targetType 是接口
+		//  ？？则无法将具体的类型转换为接口、所以直接返回？？
 		if (targetType.isInterface()) {
 			return (T) source;
 		}
 
+		// 获取源对象类型信息
 		PersistentEntity<?, ?> sourceEntity = this.context.getRequiredPersistentEntity(source.getClass());
-
+		// 获取源对象具体的数据
 		PersistentPropertyAccessor<?> sourceAccessor = sourceEntity.getPropertyAccessor(source);
-		PersistentEntity<?, ?> entity = this.context.getRequiredPersistentEntity(this.targetType);
-		PreferredConstructor<?, ? extends PersistentProperty<?>> constructor = entity.getPersistenceConstructor();
+
+		// 目标类型信息
+		PersistentEntity<?, ?> targetEntity = this.context.getRequiredPersistentEntity(this.targetType);
+		// 目标类构造器相关
+		PreferredConstructor<?, ? extends PersistentProperty<?>> constructor = targetEntity.getPersistenceConstructor();
+
+		ParameterValueProvider parameterValueProvider = new ParameterValueProvider() {
+			@Override
+			public Object getParameterValue(Parameter parameter) {
+				return sourceAccessor.getProperty(
+						sourceEntity.getRequiredPersistentProperty(parameter.getName()));
+			}
+		};
 
 		@SuppressWarnings({"rawtypes", "unchecked"})
-		Object dto = this.instantiator.createInstance(entity, new ParameterValueProvider() {
+		Object dto = this.instantiator.createInstance(targetEntity, parameterValueProvider);
 
-					@Override
-					public Object getParameterValue(Parameter parameter) {
-						return sourceAccessor.getProperty(
-								sourceEntity.getRequiredPersistentProperty(parameter.getName()));
-					}
-				});
+		PersistentPropertyAccessor<?> dtoAccessor = targetEntity.getPropertyAccessor(dto);
 
-		PersistentPropertyAccessor<?> dtoAccessor = entity.getPropertyAccessor(dto);
-
-		entity.doWithProperties((SimplePropertyHandler) property -> {
+		targetEntity.doWithProperties((SimplePropertyHandler) property -> {
 
 			if (constructor.isConstructorParameter(property)) {
 				return;

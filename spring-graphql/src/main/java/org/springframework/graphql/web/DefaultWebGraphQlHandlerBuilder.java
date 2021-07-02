@@ -33,6 +33,7 @@ import org.springframework.util.CollectionUtils;
 
 /**
  * Default implementation of {@link WebGraphQlHandler.Builder}.
+ * kp 添加 拦截器、环境变量获取器，GraphQlService是必须的、所以在构造参数中。
  *
  * @author Rossen Stoyanchev
  */
@@ -83,9 +84,10 @@ class DefaultWebGraphQlHandlerBuilder implements WebGraphQlHandler.Builder {
 
 	@Override
 	public WebGraphQlHandler build() {
-		List<WebInterceptor> interceptorsToUse = (this.interceptors != null) ? this.interceptors
-				: Collections.emptyList();
+		// 拦截器可能是 空list、该list无法在进行操作。
+		List<WebInterceptor> interceptorsToUse = (this.interceptors != null) ? this.interceptors : Collections.emptyList();
 
+		// Mono<WebOutput> handle(WebInput input)
 		WebGraphQlHandler targetHandler = (webInput) -> {
 			ExecutionInput executionInput = webInput.toExecutionInput();
 			return this.service.execute(executionInput).map((result) -> new WebOutput(webInput, result));
@@ -119,8 +121,12 @@ class DefaultWebGraphQlHandlerBuilder implements WebGraphQlHandler.Builder {
 
 		@Override
 		public Mono<WebOutput> handle(WebInput input) {
-			return this.delegate.handle(input).contextWrite((context) ->
-					ContextManager.extractThreadLocalValues(this.accessor, context));
+			// kp contextWrite：使用实例accessor将线程上下文保存到context中
+			// 	  Mono<T> contextWrite(Function<Context, Context> contextModifier)
+			return this.delegate.handle(input).contextWrite(
+					(context) ->
+							ContextManager.extractThreadLocalValues(this.accessor, context)
+			);
 		}
 
 	}

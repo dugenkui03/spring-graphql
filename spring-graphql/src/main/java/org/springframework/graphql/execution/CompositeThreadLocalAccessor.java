@@ -22,6 +22,7 @@ import java.util.Map;
 /**
  * Default implementation of a composite accessor
  * that is returned from {@link ThreadLocalAccessor#composite(List)}.
+ * kp 列表 + 继承
  *
  * @author Rossen Stoyanchev
  */

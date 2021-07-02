@@ -46,7 +46,8 @@ public class RequestInput {
 
 	private final Map<String, Object> variables;
 
-	// 输入配置
+	// RequestInput转换为 ExecutionInput 过程中
+	// 对 ExecutionInput 输入进行转换 newExecutionInput apply(oldExecutionInput.Builder oldInputBuilder, oldExecutionInput oldInput)
 	private final
 	List<BiFunction<ExecutionInput, ExecutionInput.Builder, ExecutionInput>> executionInputConfigurers = new ArrayList<>();
 
@@ -54,6 +55,7 @@ public class RequestInput {
 		Assert.notNull(query, "'query' is required");
 		this.query = query;
 		this.operationName = operationName;
+		// kp 初始值为null、则会设置为不可改变的 emptyMap。
 		this.variables = ((vars != null) ? vars : Collections.emptyMap());
 	}
 
@@ -90,7 +92,6 @@ public class RequestInput {
 	}
 
 	/**
-	 * kp 请求变量。
 	 * Return the variables that can be referenced via $syntax
 	 * extracted from the request body or a {@code null} if not provided.
 	 *
@@ -101,11 +102,12 @@ public class RequestInput {
 	}
 
 	/**
-	 * kp 添加输入处理。
-	 * Provide a consumer to configure the {@link ExecutionInput} used for input to
-	 * {@link graphql.GraphQL#executeAsync(ExecutionInput)}. The builder is initially
-	 * populated with the values from {@link #getQuery()}, {@link #getOperationName()},
-	 * and {@link #getVariables()}.
+	 * Provide a consumer to configure the {@link ExecutionInput} used for input to {@link graphql.GraphQL#executeAsync(ExecutionInput)}.
+	 * kp 将 spring-graphql 输入对象 转换为 graphql-java 的输入对象。
+	 *
+	 * The builder is initially populated with the values from {@link #getQuery()}, {@link #getOperationName()}, and {@link #getVariables()}.
+	 * kp ExecutionInput 中的 dataLoaderRegister、上下文对象都依靠 configurer 设置。
+	 *
 	 * @param configurer a {@code BiFunction} with the current {@code ExecutionInput} and
 	 * a builder to modify it.
 	 */
@@ -114,22 +116,34 @@ public class RequestInput {
 	}
 
 	/**
-	 * Create the {@link ExecutionInput} for request execution. This is initially
-	 * populated from {@link #getQuery()}, {@link #getOperationName()}, and
-	 * {@link #getVariables()}, and is then further customized through
-	 * {@link #configureExecutionInput(BiFunction)}.
+	 * Create the {@link ExecutionInput} for request execution.
+	 * This is initially populated from
+	 * 		{@link #getQuery()},
+	 * 		{@link #getOperationName()},
+	 * 		{@link #getVariables()},
+	 * kp 将 RequestInput 对象转换为 ExecutionInput
+	 *
+	 * and is then further customized
+	 * through {@link #configureExecutionInput(BiFunction)}.
+	 *
 	 * @return the execution input
 	 */
 	public ExecutionInput toExecutionInput() {
-		ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(this.query)
-				.operationName(this.operationName).variables(this.variables).build();
+		ExecutionInput executionInput = ExecutionInput.newExecutionInput()
+				.query(this.query)
+				.operationName(this.operationName)
+				.variables(this.variables)
+				.build();
 
 		// kp 使用 executionInputConfigurers 对输入进行处理后返回
 		for (BiFunction<ExecutionInput, ExecutionInput.Builder, ExecutionInput> configurer : this.executionInputConfigurers) {
 			ExecutionInput current = executionInput;
 			// current：当前对象
 			// builder：当前对象的builder
-			executionInput = executionInput.transform((builder) -> configurer.apply(current, builder));
+			executionInput = executionInput.transform(
+					// 该代码语义：使用 current 和 当前对象的builder生成新的executionInput对象
+					(builder) -> configurer.apply(current, builder)
+			);
 		}
 
 		return executionInput;

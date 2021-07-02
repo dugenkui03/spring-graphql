@@ -69,9 +69,12 @@ public abstract class ContextManager {
 	/**
 	 * Use the given accessor to extract ThreadLocal values and save them in a
 	 * sub-map in the given {@link Context}, so those can be restored later
-	 * around the execution of data fetchers and exception resolvers. The accessor
-	 * instance is also saved in the Reactor Context so it can be used to
-	 * actually restore and reset ThreadLocal values.
+	 * around the execution of data fetchers and exception resolvers.
+	 * kp 使用给定的 accessor 对象、将 ThreadLocal 变量保存到给定的 Context 中，
+	 * 	  因此在后续的 dataFetcher 和 异常处理器中可以获取到这些上下文变量。
+	 *
+	 * The accessor instance is also saved in the Reactor Context
+	 * so it can be used to actually restore and reset ThreadLocal values.
 	 * @param accessor the accessor to use
 	 * @param context the context to write to if there are ThreadLocal values
 	 * @return a new Reactor {@link ContextView} or the {@code Context} instance
@@ -80,13 +83,21 @@ public abstract class ContextManager {
 	public static Context extractThreadLocalValues(ThreadLocalAccessor accessor, Context context) {
 		Map<String, Object> valuesMap = new LinkedHashMap<>();
 		accessor.extractValues(valuesMap);
+
 		if (valuesMap.isEmpty()) {
 			return context;
 		}
-		return context.putAll((ContextView) Context.of(
+
+		ContextView subContext = Context.of(
+				// <ContextManager.THREAD_VALUES_ACCESSOR,
 				THREAD_LOCAL_VALUES_KEY, valuesMap,
+				// kp 也将 accessor 和 当前线程id保存到了上下文中
+				// <ContextManager.THREAD_LOCAL_ACCESSOR
 				THREAD_LOCAL_ACCESSOR_KEY, accessor,
-				THREAD_ID, Thread.currentThread().getId()));
+				// <ContextManager.THREAD_ID
+				THREAD_ID, Thread.currentThread().getId()
+		);
+		return context.putAll(subContext);
 	}
 
 	/**

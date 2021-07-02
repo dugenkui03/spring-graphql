@@ -54,7 +54,7 @@ class DefaultGraphQlSourceBuilder implements GraphQlSource.Builder {
 	// 将 dataFetcher 返回的异常结果包装为 List<GraphQLError>
 	private final List<DataFetcherExceptionResolver> exceptionResolvers = new ArrayList<>();
 
-	// todo
+	// kp 用于修改schema：SchemaTransformer.transformSchema(schema, visitor)
 	private final List<GraphQLTypeVisitor> typeVisitors = new ArrayList<>();
 
 	// kp
@@ -107,21 +107,30 @@ class DefaultGraphQlSourceBuilder implements GraphQlSource.Builder {
 
 	@Override
 	public GraphQlSource build() {
-		TypeDefinitionRegistry registry = this.schemaResources.stream()
-				.map(this::parseSchemaResource).reduce(TypeDefinitionRegistry::merge)
-				.orElseThrow(() -> new IllegalArgumentException("'schemaResources' should not be empty"));
+		// kp step_1 创建类型信息
+		TypeDefinitionRegistry registry =
+				this.schemaResources.stream()
+						.map(this::parseSchemaResource)
+						.reduce(TypeDefinitionRegistry::merge)
+						.orElseThrow(
+								() -> new IllegalArgumentException("'schemaResources' should not be empty")
+						);
 
+		// kp step_2 将运行时信息绑定schema
 		GraphQLSchema schema = new SchemaGenerator().makeExecutableSchema(registry, this.runtimeWiring);
 		for (GraphQLTypeVisitor visitor : this.typeVisitors) {
 			schema = SchemaTransformer.transformSchema(schema, visitor);
 		}
 
 		GraphQL.Builder builder = GraphQL.newGraphQL(schema);
+		// kp step_3 异常处理器
 		builder.defaultDataFetcherExceptionHandler(new ExceptionResolversExceptionHandler(this.exceptionResolvers));
+		// kp step_4 添加 Instrumentation
 		if (!this.instrumentations.isEmpty()) {
 			builder = builder.instrumentation(new ChainedInstrumentation(this.instrumentations));
 		}
-		this.graphQlConfigurers.accept(builder);
+		// kp step_5 TODO
+		graphQlConfigurers.accept(builder);
 		GraphQL graphQl = builder.build();
 
 		return new CachedGraphQlSource(graphQl, schema);

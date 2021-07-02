@@ -82,8 +82,9 @@ public interface WebGraphQlHandler {
 		Builder threadLocalAccessor(ThreadLocalAccessor... accessors);
 
 		/**
-		 * Alternative to {@link #threadLocalAccessor(ThreadLocalAccessor...)} with a
-		 * List.
+		 * Alternative to {@link #threadLocalAccessor(ThreadLocalAccessor...)} with a List.
+		 * kp 添加 accessors 到 WebGraphQLHandler
+		 *
 		 * @param accessors the list of accessors to add
 		 * @return this builder
 		 */

@@ -42,9 +42,11 @@ import org.springframework.beans.factory.ObjectProvider;
 public interface ThreadLocalAccessor {
 
 	/**
-	 * Extract ThreadLocal values and add them to the given Map, so they can be
-	 * saved and subsequently {@link #restoreValues(Map) restored} around the
-	 * invocation of data fetchers and exception resolvers.
+	 * Extract ThreadLocal values and add them to the given Map,
+	 * so they can be saved
+	 * and subsequently {@link #restoreValues(Map) restored} around the invocation of data fetchers and exception resolvers.
+	 * kp 从环境变量获取数据并保存到 参数map 中，这些数据可以在 dataFetcher 和 异常处理器中被使用。
+	 *
 	 * @param container to add extracted ThreadLocal values to
 	 */
 	void extractValues(Map<String, Object> container);

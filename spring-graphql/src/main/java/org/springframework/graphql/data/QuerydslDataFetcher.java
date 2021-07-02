@@ -52,6 +52,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 /**
+ *
  * Entry point to create {@link DataFetcher} using repositories through Querydsl.
  * Exposes builders accepting {@link QuerydslPredicateExecutor} or
  * {@link ReactiveQuerydslPredicateExecutor} that support customization of bindings
@@ -159,7 +160,11 @@ public abstract class QuerydslDataFetcher<T> {
 			parameters.put(entry.getKey(), Collections.singletonList(entry.getValue()));
 		}
 
-		Predicate predicate = BUILDER.getPredicate(this.domainType, (MultiValueMap) parameters, bindings);
+		Predicate predicate = BUILDER.getPredicate(
+				this.domainType,
+				(MultiValueMap) parameters,
+				bindings
+		);
 
 		// Temporary workaround for this fix in Spring Data:
 		// https://github.com/spring-projects/spring-data-commons/issues/2396
@@ -171,6 +176,7 @@ public abstract class QuerydslDataFetcher<T> {
 		return predicate;
 	}
 
+	// 创建 resultConvert
 	private static <S, T> Function<S, T> createProjection(Class<T> projectionType) {
 		// TODO: SpelAwareProxyProjectionFactory, DtoMappingContext, and EntityInstantiators
 		//  should be reused to avoid duplicate class metadata.
@@ -181,9 +187,11 @@ public abstract class QuerydslDataFetcher<T> {
 			return element -> projectionFactory.createProjection(projectionType, element);
 		}
 
-		DtoInstantiatingConverter<T> converter = new DtoInstantiatingConverter<>(projectionType,
-				new DtoMappingContext(), new EntityInstantiators());
+		DtoInstantiatingConverter<T> converter = new DtoInstantiatingConverter<>(
+				projectionType, new DtoMappingContext(), new EntityInstantiators()
+		);
 
+		// T convert(Object source) 就是Function形式
 		return converter::convert;
 	}
 
@@ -206,9 +214,11 @@ public abstract class QuerydslDataFetcher<T> {
 	}
 
 	/**
-	 * Builder for a Querydsl-based {@link DataFetcher}. Note that builder
-	 * instances are immutable and return a new instance of the builder
+	 * Builder for a Querydsl-based {@link DataFetcher}.
+	 * Note that builder instances are immutable and return a new instance of the builder
 	 * when calling configuration methods.
+	 * kp 创建普通的单数据fetcher和list数据fetcher.
+	 *
 	 * @param <T> domain type
 	 * @param <R> result type
 	 */
@@ -222,7 +232,8 @@ public abstract class QuerydslDataFetcher<T> {
 
 		private final Function<T, R> resultConverter;
 
-		Builder(QuerydslPredicateExecutor<T> executor, ClassTypeInformation<T> domainType,
+		Builder(QuerydslPredicateExecutor<T> executor,
+				ClassTypeInformation<T> domainType,
 				QuerydslBinderCustomizer<? extends EntityPath<T>> customizer,
 				Function<T, R> resultConverter) {
 
@@ -245,7 +256,11 @@ public abstract class QuerydslDataFetcher<T> {
 		public <P> Builder<T, P> projectAs(Class<P> projectionType) {
 			Assert.notNull(projectionType, "Projection type must not be null");
 			return new Builder<>(
-					this.executor, this.domainType, this.customizer, createProjection(projectionType));
+					this.executor,
+					this.domainType,
+					this.customizer,
+					createProjection(projectionType)
+			);
 		}
 
 		/**
@@ -258,7 +273,11 @@ public abstract class QuerydslDataFetcher<T> {
 		public Builder<T, R> customizer(QuerydslBinderCustomizer<? extends EntityPath<T>> customizer) {
 			Assert.notNull(customizer, "QuerydslBinderCustomizer must not be null");
 			return new Builder<>(
-					this.executor, this.domainType, customizer, this.resultConverter);
+					this.executor,
+					this.domainType,
+					customizer,
+					this.resultConverter
+			);
 		}
 
 		/**
@@ -267,7 +286,11 @@ public abstract class QuerydslDataFetcher<T> {
 		 */
 		public DataFetcher<R> single() {
 			return new SingleEntityFetcher<>(
-					this.executor, this.domainType, this.customizer, this.resultConverter);
+					this.executor,
+					this.domainType,
+					this.customizer,
+					this.resultConverter
+			);
 		}
 
 		/**
@@ -278,7 +301,11 @@ public abstract class QuerydslDataFetcher<T> {
 		 */
 		public DataFetcher<Iterable<R>> many() {
 			return new ManyEntityFetcher<>(
-					this.executor, this.domainType, this.customizer, this.resultConverter);
+					this.executor,
+					this.domainType,
+					this.customizer,
+					this.resultConverter
+			);
 		}
 
 	}
@@ -304,7 +331,6 @@ public abstract class QuerydslDataFetcher<T> {
 				ClassTypeInformation<T> domainType,
 				QuerydslBinderCustomizer<? extends EntityPath<T>> customizer,
 				Function<T, R> resultConverter) {
-
 			this.executor = executor;
 			this.domainType = domainType;
 			this.customizer = customizer;
@@ -324,7 +350,11 @@ public abstract class QuerydslDataFetcher<T> {
 		public <P> ReactiveBuilder<T, P> projectAs(Class<P> projectionType) {
 			Assert.notNull(projectionType, "Projection type must not be null");
 			return new ReactiveBuilder<>(
-					this.executor, this.domainType, this.customizer, createProjection(projectionType));
+					this.executor,
+					this.domainType,
+					this.customizer,
+					createProjection(projectionType)
+			);
 		}
 
 		/**
@@ -337,7 +367,11 @@ public abstract class QuerydslDataFetcher<T> {
 		public ReactiveBuilder<T, R> customizer(QuerydslBinderCustomizer<? extends EntityPath<T>> customizer) {
 			Assert.notNull(customizer, "QuerydslBinderCustomizer must not be null");
 			return new ReactiveBuilder<>(
-					this.executor, this.domainType, customizer, this.resultConverter);
+					this.executor,
+					this.domainType,
+					customizer,
+					this.resultConverter
+			);
 		}
 
 		/**
@@ -346,7 +380,11 @@ public abstract class QuerydslDataFetcher<T> {
 		 */
 		public DataFetcher<Mono<R>> single() {
 			return new ReactiveSingleEntityFetcher<>(
-					this.executor, this.domainType, this.customizer, this.resultConverter);
+					this.executor,
+					this.domainType,
+					this.customizer,
+					this.resultConverter
+			);
 		}
 
 		/**
@@ -355,12 +393,18 @@ public abstract class QuerydslDataFetcher<T> {
 		 */
 		public DataFetcher<Flux<R>> many() {
 			return new ReactiveManyEntityFetcher<>(
-					this.executor, this.domainType, this.customizer, this.resultConverter);
+					this.executor,
+					this.domainType,
+					this.customizer,
+					this.resultConverter
+			);
 		}
 
 	}
 
-	private static class SingleEntityFetcher<T, R> extends QuerydslDataFetcher<T> implements DataFetcher<R> {
+	private static class SingleEntityFetcher<T, R>
+			extends QuerydslDataFetcher<T>
+			implements DataFetcher<R> {
 
 		private final QuerydslPredicateExecutor<T> executor;
 
@@ -371,7 +415,6 @@ public abstract class QuerydslDataFetcher<T> {
 				ClassTypeInformation<T> domainType,
 				QuerydslBinderCustomizer<? extends EntityPath<T>> customizer,
 				Function<T, R> resultConverter) {
-
 			super(domainType, (QuerydslBinderCustomizer) customizer);
 			this.executor = executor;
 			this.resultConverter = resultConverter;
@@ -419,7 +462,10 @@ public abstract class QuerydslDataFetcher<T> {
 
 	}
 
-	private static class ReactiveSingleEntityFetcher<T, R> extends QuerydslDataFetcher<T> implements DataFetcher<Mono<R>> {
+	private static class ReactiveSingleEntityFetcher<T, R>
+			extends QuerydslDataFetcher<T>
+			// todo 确认是否影响 DataFetcherResult 的扩展性
+			implements DataFetcher<Mono<R>> {
 
 		private final ReactiveQuerydslPredicateExecutor<T> executor;
 
@@ -438,12 +484,17 @@ public abstract class QuerydslDataFetcher<T> {
 
 		@Override
 		public Mono<R> get(DataFetchingEnvironment environment) {
-			return this.executor.findOne(buildPredicate(environment)).map(this.resultConverter);
+			Predicate predicate = buildPredicate(environment);
+			return this.executor
+					.findOne(predicate)
+					.map(this.resultConverter);
 		}
 
 	}
 
-	private static class ReactiveManyEntityFetcher<T, R> extends QuerydslDataFetcher<T> implements DataFetcher<Flux<R>> {
+	private static class ReactiveManyEntityFetcher<T, R>
+			extends QuerydslDataFetcher<T>
+			implements DataFetcher<Flux<R>> {
 
 		private final ReactiveQuerydslPredicateExecutor<T> executor;
 
