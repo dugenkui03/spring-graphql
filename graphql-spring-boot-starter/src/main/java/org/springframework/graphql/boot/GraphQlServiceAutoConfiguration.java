@@ -29,8 +29,8 @@ import org.springframework.graphql.execution.ExecutionGraphQlService;
 import org.springframework.graphql.execution.GraphQlSource;
 
 /**
- * {@link EnableAutoConfiguration Auto-configuration} for creating a
- * {@link GraphQlService}.
+ * {@link EnableAutoConfiguration Auto-configuration} for creating a {@link GraphQlService}.
+ * https://cloud.tencent.com/developer/article/1403117
  *
  * @author Brian Clozel
  * @since 1.0.0

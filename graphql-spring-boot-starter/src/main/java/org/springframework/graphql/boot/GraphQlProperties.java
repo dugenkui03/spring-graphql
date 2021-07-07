@@ -81,6 +81,7 @@ public class GraphQlProperties {
 			this.locations = appendSlashIfNecessary(locations);
 		}
 
+		// slash n:斜线
 		private List<String> appendSlashIfNecessary(List<String> locations) {
 			return locations.stream()
 					.map(location -> location.endsWith("/") ? location : location + "/")

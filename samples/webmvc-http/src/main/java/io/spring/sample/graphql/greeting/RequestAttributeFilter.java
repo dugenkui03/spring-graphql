@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Servlet Filter that adds a Servlet request attribute.
- * 添加属性 <"RequestAttributeFilter.name", "007">
+ * 添加属性 <"RequestAttributeFilter.name", "007">，可以在dataFetcher中获取该结果
  */
 @Component
 public class RequestAttributeFilter implements Filter {

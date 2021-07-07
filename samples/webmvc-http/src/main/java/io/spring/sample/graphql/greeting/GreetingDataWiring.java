@@ -9,6 +9,9 @@ import org.springframework.web.context.request.RequestContextHolder;
 
 import static org.springframework.web.context.request.RequestAttributes.SCOPE_REQUEST;
 
+/**
+ * 字段绑定 DataFetcher
+ */
 @Component
 public class GreetingDataWiring implements RuntimeWiringBuilderCustomizer {
 
