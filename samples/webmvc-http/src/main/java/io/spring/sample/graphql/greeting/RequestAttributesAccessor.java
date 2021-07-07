@@ -29,33 +29,25 @@ import org.springframework.web.context.request.RequestContextHolder;
 @Component
 public class RequestAttributesAccessor implements ThreadLocalAccessor {
 
-	private static final String ATTRIBUTES_KEY = RequestAttributesAccessor.class.getName() + ".requestAttributes";
+	private static final String KEY = RequestAttributesAccessor.class.getName();
 
 	// 在 上下文map 中set数据
 	@Override
 	public void extractValues(Map<String, Object> container) {
-		RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
-		if (attributes != null) {
-			// <"RequestAttributesAccessor.requestAttributes",RequestAttributes 对象>
-			container.put(ATTRIBUTES_KEY, attributes);
-		}
+		container.put(KEY, RequestContextHolder.getRequestAttributes());
 	}
 
 	@Override
 	public void restoreValues(Map<String, Object> values) {
-		// "RequestAttributesAccessor.requestAttributes"
-		RequestAttributes attributes = (RequestAttributes) values.get(ATTRIBUTES_KEY);
-		if (attributes != null) {
+		if (values.containsKey(KEY)) {
 			// 将给定的对象绑定到当前的线程
-			RequestContextHolder.setRequestAttributes(attributes);
+			RequestContextHolder.setRequestAttributes((RequestAttributes) values.get(KEY));
 		}
 	}
 
 	@Override
 	public void resetValues(Map<String, Object> values) {
-		if (values.get(ATTRIBUTES_KEY) != null) {
-			RequestContextHolder.resetRequestAttributes();
-		}
+		RequestContextHolder.resetRequestAttributes();
 	}
 
 }

@@ -22,10 +22,11 @@ import graphql.GraphQL;
 import reactor.core.publisher.Mono;
 
 import org.springframework.graphql.GraphQlService;
+import org.springframework.graphql.RequestInput;
 
 /**
- * Implementation of {@link GraphQlService} that performs GraphQL request execution
- * through {@link GraphQL#executeAsync(ExecutionInput)}.
+ * {@link GraphQlService} that uses a {@link GraphQlSource} to obtain a
+ * {@link GraphQL} instance and perform query execution.
  *
  * @author Rossen Stoyanchev
  * @since 1.0.0
@@ -40,22 +41,19 @@ public class ExecutionGraphQlService implements GraphQlService {
 	}
 
 	@Override
-	public Mono<ExecutionResult> execute(ExecutionInput input) {
+	public Mono<ExecutionResult> execute(RequestInput input) {
+		ExecutionInput executionInput = input.toExecutionInput();
 		GraphQL graphQl = this.graphQlSource.graphQl();
 		// kp Function<ContextView, ? extends Mono<? extends T>>
 		//	  相比于 defer(Supplier)、deferContextual(Function)可以携带上下文参数
-		return Mono.deferContextual(
-				// ContextView
-				(contextView) -> {
-					// kp 将 ContextView对象 放到请求上下文中
-					ContextManager.setReactorContext(contextView, input);
-
-					// 通过 CompletableFuture 对象创建Mono
-					// 注意：该逻辑是包装在 deferContextual 中的
-					// 		所以在解析deferContextual结果的时候才会执行这些逻辑
-					return Mono.fromFuture(graphQl.executeAsync(input));
-				}
-		);
+		return Mono.deferContextual((contextView) -> {
+			// kp 将 ContextView对象 放到请求上下文中
+			ReactorContextManager.setReactorContext(contextView, executionInput);
+			// 通过 CompletableFuture 对象创建Mono
+			// 注意：该逻辑是包装在 deferContextual 中的
+			// 		所以在解析deferContextual结果的时候才会执行这些逻辑
+			return Mono.fromFuture(graphQl.executeAsync(executionInput));
+		});
 	}
 
 }

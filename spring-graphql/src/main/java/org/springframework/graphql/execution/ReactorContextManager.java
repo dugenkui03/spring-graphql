@@ -28,21 +28,25 @@ import reactor.util.context.ContextView;
 import org.springframework.lang.Nullable;
 
 /**
- * Package private utility class for propagating(传播) a Reactor {@link ContextView}
- * through the {@link ExecutionInput} and the {@link DataFetchingEnvironment} of a request.
+ * Provides helper methods to save Reactor context in the {@link ExecutionInput}
+ * so it can be subsequently obtained from {@link DataFetchingEnvironment} and
+ * propagated to data fetchers or exception handlers.
+ *
+ * <p>The Reactor context is also used to carry ThreadLocal values that are also
+ * restored around the execution of data fetchers and exceptions handlers.
  *
  * @author Rossen Stoyanchev
  * @since 1.0.0
  */
-public abstract class ContextManager {
+public abstract class ReactorContextManager {
 
-	private static final String CONTEXT_VIEW_KEY = ContextManager.class.getName() + ".CONTEXT_VIEW";
+	private static final String CONTEXT_VIEW_KEY = ReactorContextManager.class.getName() + ".CONTEXT_VIEW";
 
-	private static final String THREAD_ID = ContextManager.class.getName() + ".THREAD_ID";
+	private static final String THREAD_ID = ReactorContextManager.class.getName() + ".THREAD_ID";
 
-	private static final String THREAD_LOCAL_VALUES_KEY = ContextManager.class.getName() + ".THREAD_VALUES_ACCESSOR";
+	private static final String THREAD_LOCAL_VALUES_KEY = ReactorContextManager.class.getName() + ".THREAD_VALUES_ACCESSOR";
 
-	private static final String THREAD_LOCAL_ACCESSOR_KEY = ContextManager.class.getName() + ".THREAD_LOCAL_ACCESSOR";
+	private static final String THREAD_LOCAL_ACCESSOR_KEY = ReactorContextManager.class.getName() + ".THREAD_LOCAL_ACCESSOR";
 
 	/**
 	 * kp 将 ContextView对象 放到请求上下文中，key为 CONTEXT_VIEW_KEY，后续可以通过DataFetchingEnvironment获取

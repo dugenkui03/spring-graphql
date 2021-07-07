@@ -20,12 +20,14 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.GraphQLError;
 import graphql.GraphqlErrorBuilder;
+import graphql.schema.DataFetchingEnvironment;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
@@ -35,8 +37,6 @@ import org.springframework.graphql.GraphQlTestUtils;
 import org.springframework.graphql.TestThreadLocalAccessor;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-// @formatter:off
 
 /**
  * Tests for {@link ExceptionResolversExceptionHandler}.
@@ -78,7 +78,7 @@ public class ExceptionResolversExceptionHandlerTests {
 								.errorType(ErrorType.BAD_REQUEST).build()))));
 
 		ExecutionInput input = ExecutionInput.newExecutionInput().query("{ greeting }").build();
-		ContextManager.setReactorContext(Context.of("name", "007"), input);
+		ReactorContextManager.setReactorContext(Context.of("name", "007"), input);
 
 		ExecutionResult result = graphQl.executeAsync(input).get();
 
@@ -96,15 +96,15 @@ public class ExceptionResolversExceptionHandlerTests {
 					(env) -> {
 						throw new IllegalArgumentException("Invalid greeting");
 					},
-					(SyncDataFetcherExceptionResolver) (ex, env) -> Collections.singletonList(
+					threadLocalContextAwareExceptionResolver((ex, env) ->
 							GraphqlErrorBuilder.newError(env)
 									.message("Resolved error: " + ex.getMessage() + ", name=" + nameThreadLocal.get())
 									.errorType(ErrorType.BAD_REQUEST)
 									.build()));
 
 			ExecutionInput input = ExecutionInput.newExecutionInput().query("{ greeting }").build();
-			ContextView view = ContextManager.extractThreadLocalValues(accessor, Context.empty());
-			ContextManager.setReactorContext(view, input);
+			ContextView view = ReactorContextManager.extractThreadLocalValues(accessor, Context.empty());
+			ReactorContextManager.setReactorContext(view, input);
 
 			ExecutionResult result = Mono.delay(Duration.ofMillis(10))
 					.flatMap((aLong) -> Mono.fromFuture(graphQl.executeAsync(input)))
@@ -153,6 +153,20 @@ public class ExceptionResolversExceptionHandlerTests {
 		Map<String, Object> data = result.getData();
 		assertThat(data).hasSize(1).containsEntry("greeting", null);
 		assertThat(result.getErrors()).hasSize(0);
+	}
+
+	private static DataFetcherExceptionResolver threadLocalContextAwareExceptionResolver(
+			BiFunction<Throwable, DataFetchingEnvironment, GraphQLError> resolver) {
+
+		DataFetcherExceptionResolverAdapter adapter = new DataFetcherExceptionResolverAdapter() {
+
+			@Override
+			protected GraphQLError resolveToSingleError(Throwable ex, DataFetchingEnvironment env) {
+				return resolver.apply(ex, env);
+			}
+		};
+		adapter.setThreadLocalContextAware(true);
+		return adapter;
 	}
 
 }

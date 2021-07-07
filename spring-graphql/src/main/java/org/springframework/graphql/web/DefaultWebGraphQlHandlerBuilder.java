@@ -21,11 +21,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import graphql.ExecutionInput;
 import reactor.core.publisher.Mono;
 
 import org.springframework.graphql.GraphQlService;
-import org.springframework.graphql.execution.ContextManager;
+import org.springframework.graphql.execution.ReactorContextManager;
 import org.springframework.graphql.execution.ThreadLocalAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -85,20 +84,17 @@ class DefaultWebGraphQlHandlerBuilder implements WebGraphQlHandler.Builder {
 	@Override
 	public WebGraphQlHandler build() {
 		// 拦截器可能是 空list、该list无法在进行操作。
-		List<WebInterceptor> interceptorsToUse = (this.interceptors != null) ? this.interceptors : Collections.emptyList();
+		List<WebInterceptor> interceptorsToUse =
+				(this.interceptors != null) ? this.interceptors : Collections.emptyList();
 
 		// Mono<WebOutput> handle(WebInput input)
-		WebGraphQlHandler targetHandler = (webInput) -> {
-			ExecutionInput executionInput = webInput.toExecutionInput();
-			return this.service.execute(executionInput).map((result) -> new WebOutput(webInput, result));
-		};
+		WebGraphQlHandler targetHandler = (webInput) ->
+				this.service.execute(webInput).map((result) -> new WebOutput(webInput, result));
 
-		// @formatter:off
 		WebGraphQlHandler interceptionChain = interceptorsToUse.stream()
 				.reduce(WebInterceptor::andThen)
 				.map((interceptor) -> (WebGraphQlHandler) (input) -> interceptor.intercept(input, targetHandler))
 				.orElse(targetHandler);
-		// @formatter:on
 
 		return (CollectionUtils.isEmpty(this.accessors) ? interceptionChain
 				: new ThreadLocalExtractingHandler(interceptionChain, ThreadLocalAccessor.composite(this.accessors)));
@@ -123,10 +119,8 @@ class DefaultWebGraphQlHandlerBuilder implements WebGraphQlHandler.Builder {
 		public Mono<WebOutput> handle(WebInput input) {
 			// kp contextWrite：使用实例accessor将线程上下文保存到context中
 			// 	  Mono<T> contextWrite(Function<Context, Context> contextModifier)
-			return this.delegate.handle(input).contextWrite(
-					(context) ->
-							ContextManager.extractThreadLocalValues(this.accessor, context)
-			);
+			return this.delegate.handle(input).contextWrite((context) ->
+					ReactorContextManager.extractThreadLocalValues(this.accessor, context));
 		}
 
 	}

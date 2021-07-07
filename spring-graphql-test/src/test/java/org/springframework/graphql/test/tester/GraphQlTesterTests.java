@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.ExecutionResultImpl;
 import graphql.GraphQLError;
@@ -36,6 +35,7 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.graphql.GraphQlService;
+import org.springframework.graphql.RequestInput;
 import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 
@@ -43,8 +43,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
-
-// @formatter:off
 
 /**
  * Tests for {@link GraphQlTester}.
@@ -62,7 +60,7 @@ public class GraphQlTesterTests {
 
 	private final GraphQlTester graphQlTester = GraphQlTester.create(this.service);
 
-	private final ArgumentCaptor<ExecutionInput> inputCaptor = ArgumentCaptor.forClass(ExecutionInput.class);
+	private final ArgumentCaptor<RequestInput> inputCaptor = ArgumentCaptor.forClass(RequestInput.class);
 
 
 	@Test
@@ -185,7 +183,7 @@ public class GraphQlTesterTests {
 
 		spec.path("hero").entity(MovieCharacter.class).isEqualTo(MovieCharacter.create("R2-D2"));
 
-		ExecutionInput input = this.inputCaptor.getValue();
+		RequestInput input = this.inputCaptor.getValue();
 		assertThat(input.getQuery()).contains(query);
 		assertThat(input.getOperationName()).isEqualTo("HeroNameAndFriends");
 		assertThat(input.getVariables()).hasSize(2);

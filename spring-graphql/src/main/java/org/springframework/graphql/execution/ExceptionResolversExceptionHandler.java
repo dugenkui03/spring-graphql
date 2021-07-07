@@ -37,7 +37,7 @@ import org.springframework.web.client.ExtractingResponseErrorHandler;
 
 /**
  * {@link DataFetcherExceptionHandler} that invokes {@link DataFetcherExceptionResolver}'s
- * in a sequence until one returns a non-null list of {@link GraphQLError}'s.
+ * in a sequence until one returns a list of {@link GraphQLError}'s.
  *
  * @author Rossen Stoyanchev
  */
@@ -67,22 +67,20 @@ class ExceptionResolversExceptionHandler implements DataFetcherExceptionHandler 
 		return invokeChain(exception, parameters.getDataFetchingEnvironment());
 	}
 
-	// @formatter:off
-
 	DataFetcherExceptionHandlerResult invokeChain(Throwable ex, DataFetchingEnvironment env) {
 		// For now we have to block:
 		// https://github.com/graphql-java/graphql-java/issues/2356
 		try {
 			return Flux.fromIterable(this.resolvers)
-					.flatMap((resolver) -> resolveErrors(ex, env, resolver))
+					.flatMap((resolver) -> resolver.resolveException(ex, env))
 					.next()
 					.map((errors) -> DataFetcherExceptionHandlerResult.newResult().errors(errors).build())
 					.switchIfEmpty(Mono.fromCallable(() -> applyDefaultHandling(ex, env)))
-					.contextWrite((context) -> { // todo 现在 context是什么数据
+					.contextWrite((context) -> {
 						/**
 						 * 获取执行上下文，详情见 {@link ExecutionGraphQlService}
 						 */
-						ContextView contextView = ContextManager.getReactorContext(env);
+						ContextView contextView = ReactorContextManager.getReactorContext(env);
 						return (contextView.isEmpty() ? context : context.putAll(contextView));
 					})
 					.toFuture()
@@ -97,19 +95,6 @@ class ExceptionResolversExceptionHandler implements DataFetcherExceptionHandler 
 		}
 	}
 
-	private Mono<List<GraphQLError>> resolveErrors(
-			Throwable ex, DataFetchingEnvironment environment, DataFetcherExceptionResolver resolver) {
-
-		ContextView contextView = ContextManager.getReactorContext(environment);
-		try {
-			ContextManager.restoreThreadLocalValues(contextView);
-			return resolver.resolveException(ex, environment);
-		}
-		finally {
-			ContextManager.resetThreadLocalValues(contextView);
-		}
-	}
-
 	private DataFetcherExceptionHandlerResult applyDefaultHandling(Throwable ex, DataFetchingEnvironment env) {
 		GraphQLError error = GraphqlErrorBuilder.newError(env)
 				// 异常信息
@@ -118,7 +103,5 @@ class ExceptionResolversExceptionHandler implements DataFetcherExceptionHandler 
 				.build();
 		return DataFetcherExceptionHandlerResult.newResult(error).build();
 	}
-
-	// @formatter:on
 
 }

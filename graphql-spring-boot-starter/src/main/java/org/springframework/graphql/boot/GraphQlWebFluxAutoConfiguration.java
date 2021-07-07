@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 import graphql.GraphQL;
-import graphql.schema.idl.SchemaPrinter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -67,7 +66,7 @@ import static org.springframework.web.reactive.function.server.RequestPredicates
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.REACTIVE)
-@ConditionalOnClass(GraphQL.class)
+@ConditionalOnClass({GraphQL.class, GraphQlHttpHandler.class})
 @ConditionalOnBean(GraphQlSource.class)
 @AutoConfigureAfter(GraphQlServiceAutoConfiguration.class)
 public class GraphQlWebFluxAutoConfiguration {
@@ -96,7 +95,7 @@ public class GraphQlWebFluxAutoConfiguration {
 		if (logger.isInfoEnabled()) {
 			logger.info("GraphQL endpoint HTTP POST " + graphQLPath);
 		}
-		// @formatter:off
+
 		RouterFunctions.Builder builder = RouterFunctions.route()
 				.GET(graphQLPath, request ->
 						ServerResponse.status(HttpStatus.METHOD_NOT_ALLOWED)
@@ -105,7 +104,6 @@ public class GraphQlWebFluxAutoConfiguration {
 				.POST(graphQLPath,
 						accept(MediaType.APPLICATION_JSON).and(contentType(MediaType.APPLICATION_JSON)),
 						handler::handleRequest);
-		// @formatter:on
 
 		if (properties.getGraphiql().isEnabled()) {
 			Resource resource = resourceLoader.getResource("classpath:graphiql/index.html");
@@ -115,8 +113,7 @@ public class GraphQlWebFluxAutoConfiguration {
 
 		if (properties.getSchema().getPrinter().isEnabled()) {
 			SchemaHandler schemaHandler = new SchemaHandler(graphQlSource);
-			String schemaPath = properties.getSchema().getPrinter().getPath();
-			builder = builder.GET(graphQLPath + schemaPath, schemaHandler::handleRequest);
+			builder = builder.GET(graphQLPath + "/schema", schemaHandler::handleRequest);
 		}
 
 		return builder.build();

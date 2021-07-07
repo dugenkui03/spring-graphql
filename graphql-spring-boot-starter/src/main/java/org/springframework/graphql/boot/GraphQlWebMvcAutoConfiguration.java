@@ -73,7 +73,7 @@ import static org.springframework.web.servlet.function.RequestPredicates.content
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-@ConditionalOnClass(GraphQL.class)
+@ConditionalOnClass({GraphQL.class, GraphQlHttpHandler.class})
 @ConditionalOnBean(GraphQlSource.class)
 @AutoConfigureAfter(GraphQlServiceAutoConfiguration.class)
 public class GraphQlWebMvcAutoConfiguration {
@@ -108,7 +108,6 @@ public class GraphQlWebMvcAutoConfiguration {
 			logger.info("GraphQL endpoint HTTP POST " + graphQLPath);
 		}
 
-		// @formatter:off
 		RouterFunctions.Builder builder = RouterFunctions.route()
 				.GET(graphQLPath, request ->
 						ServerResponse.status(HttpStatus.METHOD_NOT_ALLOWED)
@@ -117,7 +116,6 @@ public class GraphQlWebMvcAutoConfiguration {
 				.POST(graphQLPath,
 						contentType(MediaType.APPLICATION_JSON).and(accept(MediaType.APPLICATION_JSON)),
 						handler::handleRequest);
-		// @formatter:on
 
 		if (properties.getGraphiql().isEnabled()) {
 			Resource resource = resourceLoader.getResource("classpath:graphiql/index.html");
@@ -127,8 +125,7 @@ public class GraphQlWebMvcAutoConfiguration {
 
 		if (properties.getSchema().getPrinter().isEnabled()) {
 			SchemaHandler schemaHandler = new SchemaHandler(graphQlSource);
-			String schemaPath = properties.getSchema().getPrinter().getPath();
-			builder = builder.GET(graphQLPath + schemaPath, schemaHandler::handleRequest);
+			builder = builder.GET(graphQLPath + "/schema", schemaHandler::handleRequest);
 		}
 
 		return builder.build();
@@ -142,14 +139,11 @@ public class GraphQlWebMvcAutoConfiguration {
 		@Bean
 		@ConditionalOnMissingBean
 		public GraphQlWebSocketHandler graphQlWebSocketHandler(WebGraphQlHandler webGraphQlHandler,
-															   GraphQlProperties properties,
-															   HttpMessageConverters converters) {
-			// @formatter:off
+				GraphQlProperties properties, HttpMessageConverters converters) {
 			HttpMessageConverter<?> converter = converters.getConverters().stream()
 					.filter((candidate) -> candidate.canRead(Map.class, MediaType.APPLICATION_JSON))
 					.findFirst()
 					.orElseThrow(() -> new IllegalStateException("No JSON converter"));
-			// @formatter:on
 
 			return new GraphQlWebSocketHandler(webGraphQlHandler, converter,
 					properties.getWebsocket().getConnectionInitTimeout());

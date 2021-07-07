@@ -20,6 +20,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import graphql.ExecutionResult;
 import graphql.ExecutionResultImpl;
@@ -30,8 +31,6 @@ import reactor.core.scheduler.Schedulers;
 import org.springframework.http.HttpHeaders;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-// @formatter:off
 
 /**
  * Unit tests for a {@link WebInterceptor} chain.
@@ -62,8 +61,11 @@ public class WebInterceptorTests {
 
 	@Test
 	void responseHeader() {
+		Function<WebOutput, WebOutput> headerFunction = (output) ->
+				output.transform((builder) -> builder.responseHeader("testHeader", "testValue"));
+
 		WebGraphQlHandler handler = WebGraphQlHandler.builder((input) -> emptyExecutionResult())
-				.interceptor((input, next) -> next.handle(input).map((output) -> output.transform((builder) -> builder.responseHeader("testHeader", "testValue"))))
+				.interceptor((input, next) -> next.handle(input).map(headerFunction))
 				.build();
 
 		HttpHeaders headers = handler.handle(webInput).block().getResponseHeaders();
@@ -75,9 +77,9 @@ public class WebInterceptorTests {
 	void executionInputCustomization() {
 		AtomicReference<String> actualName = new AtomicReference<>();
 
-		WebGraphQlHandler handler = WebGraphQlHandler.builder(
-				(input) -> {
-					actualName.set(input.getOperationName());
+		WebGraphQlHandler handler = WebGraphQlHandler
+				.builder((input) -> {
+					actualName.set(input.toExecutionInput().getOperationName());
 					return emptyExecutionResult();
 				})
 				.interceptor((webInput, next) -> {
