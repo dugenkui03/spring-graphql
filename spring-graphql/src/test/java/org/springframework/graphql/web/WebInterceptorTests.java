@@ -38,8 +38,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class WebInterceptorTests {
 
-	private static final WebInput webInput = new WebInput(URI.create("http://abc.org"), new HttpHeaders(),
-			Collections.singletonMap("query", "{ notUsed }"), "1");
+	private static final WebInput webInput = new WebInput(
+			URI.create("http://abc.org"),
+			new HttpHeaders(),
+			Collections.singletonMap("query", "{ notUsed }"),
+			"1"
+	);
 
 	@Test
 	void interceptorOrder() {
@@ -93,24 +97,24 @@ public class WebInterceptorTests {
 
 	private static class OrderInterceptor implements WebInterceptor {
 
-		private final StringBuilder output;
+		private final StringBuilder stringBuilderOutput;
 
 		private final int order;
 
 		OrderInterceptor(int order, StringBuilder output) {
-			this.output = output;
+			this.stringBuilderOutput = output;
 			this.order = order;
 		}
 
 		@Override
 		public Mono<WebOutput> intercept(WebInput input, WebGraphQlHandler next) {
-			this.output.append(":pre").append(this.order);
-			return next.handle(input)
-					.map((output) -> {
-						this.output.append(":post").append(this.order);
-						return output;
-					})
-					.subscribeOn(Schedulers.boundedElastic());
+			this.stringBuilderOutput.append(":pre").append(this.order);
+			Mono<WebOutput> mono = next.handle(input);
+			Mono<WebOutput> mappedMono = mono.map((output) -> {
+				this.stringBuilderOutput.append(":post").append(this.order);
+				return output;
+			});
+			return mappedMono.subscribeOn(Schedulers.boundedElastic());
 		}
 
 	}
